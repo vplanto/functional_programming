@@ -1,0 +1,15 @@
+# Custom IDE & Agents
+.agents/
+.idea/
+.bsp/
+.metals/
+
+# sbt specific
+target/
+project/target/
+project/project/
+
+# IDE Files
+*.iml
+*.iws
+.DS_Store
