@@ -111,6 +111,12 @@ val result = (1 to 100)        // 1. Генеруємо числа від 1 до
 3. Зверніть увагу, що результат **завжди різний** (і хибний). Це класичний стан гонитви (Race Condition) — найгірший нічний жах імперативних розробників.
 
 ### Завдання 2: Рефакторинг у чисте ФП
+
+> **📚 Що потрібно знати для виконання:**
+> 1. Теоретична база: чому ми відмовляємося від `var` і що таке чисті функції — читайте у [Лекції 01: Основи ФП](01_immutability_and_state.md).
+> 2. Як працює синтаксис `match` у Scala: [Офіційна документація по Pattern Matching](https://docs.scala-lang.org/tour/pattern-matching.html).
+> 3. Як працюють колекції (`filter`, `map`): [Офіційна документація по Collections API](https://docs.scala-lang.org/scala3/book/collections-methods.html).
+
 Досить використовувати імперативний підхід з `var`. Напишіть чистий код, де все є виразом (Expression-Oriented Programming).
 1. У файлі `Workshop.scala` є заготовки для Алгебраїчних Типів Даних (ADT) `RiskLevel`.
 2. Реалізуйте чисту функцію `categorize`, використовуючи **Pattern Matching** (`match`). Ніяких `if-else` чи присвоювань змінних!
@@ -131,3 +137,27 @@ sbt test
 - **`sbt` не знайдено:** Переконайтеся, що ви встановили Scala та sbt (найкраще через [Coursier](https://get-coursier.io/)).
 - **Помилка `not found: value par`:** Починаючи зі Scala 2.13, паралельні колекції винесені в окрему бібліотеку. Переконайтеся, що вгорі файлу є `import scala.collection.parallel.CollectionConverters._`, а у файлі `build.sbt` підключена відповідна бібліотека.
 - **Як запустити конкретний файл?** Якщо в проєкті кілька точок входу (кілька `object ... extends App`), використовуйте `sbt "runMain НазваОбєкта"`, наприклад: `sbt "runMain Workshop"`.
+
+<details markdown="1">
+<summary>Спойлер: Референсне рішення (Завдання 2)</summary>
+
+```scala
+def categorize(amount: Double): RiskLevel = amount match {
+  case a if a > 80.0 => HighRisk
+  case a if a > 50.0 => MediumRisk
+  case _             => LowRisk
+}
+
+def getMultiplier(level: RiskLevel): Double = level match {
+  case HighRisk   => 1.5
+  case MediumRisk => 1.2
+  case LowRisk    => 1.0
+}
+
+val finalRiskSum = data.par
+  .filter(_ > 50.0)
+  .map(t => t * getMultiplier(categorize(t)))
+  .sum
+```
+</details>
+
