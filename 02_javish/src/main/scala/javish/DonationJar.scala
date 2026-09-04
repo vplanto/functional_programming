@@ -10,6 +10,7 @@ object DonationJar {
 }
 
 final class DonationJar(val jarId: String, val goalAmount: Double) {
+  import DonationJar.log
 
   var balance: Double = 0.0
   // у Java: private final List<Donation> donations = new ArrayList<>();

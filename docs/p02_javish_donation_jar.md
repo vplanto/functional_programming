@@ -119,7 +119,8 @@ println(f"Прогрес: ${jar.progressPercent()}%.1f%%")
 
 ```bash
 cd 02_javish
-sbt run
+sbt "runMain JavishDemo"
+# Або через 'sbt run' та вибір зі списку: [3] JavishDemo
 ```
 
 У консолі з'являться **дві різні суми**. Подивіться на код ще раз: звідки кожна береться? Хто головний — `balance` чи список донатів?
@@ -127,7 +128,7 @@ sbt run
 ### Тест
 
 ```bash
-sbt test
+sbt "testOnly JavishPainSpec"
 ```
 
 `JavishPainSpec` перевіряє інваріант: **balance == сума донатів**. На цьому коді тест **падає**.
@@ -414,10 +415,13 @@ sbt "runMain FpBenchmark"
 ### Тести
 
 ```bash
-sbt test
+sbt "testOnly WorkshopSpec"
 ```
 
-`WorkshopSpec` на чистому коді **зелені** — інваріант «сума з журналу» тримається.
+`WorkshopSpec` на чистому коді **зелений** — інваріант «сума з журналу» тримається.
+
+> [!NOTE]
+> Якщо запустити загальний `sbt test`, sbt виконає обидва набори: `JavishPainSpec` залишиться червоним (як нагадування про баг у мутабельному коді), а `WorkshopSpec` буде зеленим.
 
 ### Imperative Shell: де живе логування
 
@@ -534,5 +538,6 @@ sbt "runMain DonationApp"
 
 - `sbt` **не знайдено** — див. [n00. Налаштування середовища](n00_env_and_git.md).
 - **Логи не видно** — переконайтесь, що є `src/main/resources/simplelogger.properties`.
-- **Кілька** `main` — `sbt run` → `JavishDemo`; `sbt "runMain LogBenchmark"` — лог; `sbt "runMain FpBenchmark"` — mutable vs immutable; `sbt "runMain Workshop"` — демо fp; `sbt "runMain DonationApp"` — Imperative Shell.
+- **Кілька** `main` — `sbt "runMain JavishDemo"`; `sbt "runMain LogBenchmark"` — лог; `sbt "runMain FpBenchmark"` — mutable vs immutable; `sbt "runMain Workshop"` — демо fp; `sbt "runMain DonationApp"` — Imperative Shell.
+- **Окремі тести** — `sbt "testOnly WorkshopSpec"` для перевірки чистого коду або `sbt "testOnly JavishPainSpec"` для перевірки бага (загальний `sbt test` запускає обидва).
 

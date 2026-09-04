@@ -30,6 +30,7 @@ class WorkshopSpec extends AnyFunSuite {
   }
 
   test("topDonors повертає топ донорів за сумою") {
-    assert(topDonors(demo, 2) == List(("Олена", 1_200.0), ("Андрій", 1_200.0)))
+    // В Олени (500 + 700) та Андрія однакова сума (1 200), їхній відносний порядок не принциповий
+    assert(topDonors(demo, 2).toSet == Set(("Олена", 1_200.0), ("Андрій", 1_200.0)))
   }
 }

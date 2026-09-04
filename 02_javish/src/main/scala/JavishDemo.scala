@@ -2,7 +2,7 @@ import javish.DonationJar
 
 /**
  * Демонстрація розбіжності balance і суми донатів.
- * Запуск: sbt run
+ * Запуск: sbt "runMain JavishDemo" (або sbt run -> 3)
  */
 object JavishDemo extends App {
 
