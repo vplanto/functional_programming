@@ -10,9 +10,9 @@ enum ParsingError:
 
   def message: String = this match
     case InsufficientColumns(row, exp, act, raw) =>
-      s"Рядок $row: очікувалося $exp колонок, отримано $act (вміст: '$raw')"
+      s"Рядок ${row}: очікувалося ${exp} колонок, отримано ${act} (вміст: '${raw}')"
     case InvalidField(row, field, value, details) =>
-      s"Рядок $row, поле '$field': невалідне значення '$value' ($details)"
+      s"Рядок ${row}, поле '${field}': невалідне значення '${value}' (${details})"
 
 object Main:
 

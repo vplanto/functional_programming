@@ -440,7 +440,7 @@ import fp.{Donation, Jar}
 import fp.JarLogic._
 import org.slf4j.LoggerFactory
 
-object DonationApp extends App {
+object DonationApp:
   private val log = LoggerFactory.getLogger(getClass)
 
   // мутабельний стан — ТІЛЬКИ на верхньому рівні shell

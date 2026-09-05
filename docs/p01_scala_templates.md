@@ -14,7 +14,7 @@
 | -- | ----- | ------- |
 | Пакет | lowercase, крапки | `fp`, `edu.onu.fp` |
 | `class` / `trait` / `object` / `case class` | **PascalCase** | `DonationJar`, `JarLogic`, `Donation` |
-| Точка входу (`extends App`) | **PascalCase**, ім'я = роль | `Main`, `Workshop`, `JavishDemo`, `LogBenchmark` |
+| Точка входу (`@main`) | **camelCase** для методу, **PascalCase** для об'єкта | `@main def runWorkshop`, `object Workshop` |
 | Метод / `def` | **camelCase** | `addDonation`, `sumFromDonations`, `donateSilent` |
 | `val` / локальна змінна | **camelCase** | `finalJar`, `donationCount`, `currentJar` |
 | `var` | **camelCase** (рідко) | `balance`, `currentJar` — лише в shell |
@@ -27,24 +27,29 @@
 | Ситуація | Команда |
 | -------- | ------- |
 | Один `main` у проєкті | `sbt run` |
-| Кілька `main` | `sbt "runMain Workshop"` — ім'я **об'єкта**, не файлу |
+| Кілька `main` | `sbt "runMain Workshop"` — ім'я **об'єкта** чи `@main` методу |
 | Тести | `sbt test` |
 
 ---
 
-## 1. Точка входу
+## 1. Точка входу (анотація `@main` у Scala 3)
+
+У Scala 3 застарілий `extends App` **не використовується**, оскільки він базується на механізмі `DelayedInit` і може викликати непередбачувані `NullPointerException` через змінений порядок ініціалізації полів. Замість нього стандартом є анотація `@main`:
 
 ```scala
-object Workshop extends App {
-  println("Старт")
-}
+object Workshop:
+  @main def runWorkshop(): Unit = {
+    println("Старт")
+  }
+
+  def main(args: Array[String]): Unit = runWorkshop()
 ```
 
-| Java | Scala |
-| ---- | ----- |
-| `public static void main(String[] args)` | `object ... extends App` |
+| Java | Scala 3 |
+| ---- | ------- |
+| `public static void main(String[] args)` | `@main def run(): Unit` або `def main(...)` |
 
-Ім'я `object` і команда запуску — [Naming convention](#naming-convention) вище.
+Ім'я `object` чи `@main` методу та команда запуску — [Naming convention](#naming-convention) вище.
 
 ---
 
@@ -192,11 +197,37 @@ def noisy(x: Int): Unit = println(x)  // Unit ≈ void; зазвичай side ef
 
 ---
 
+## 10. Залізничний розподіл за один прохід (`partitionMap`)
+
+Коли потрібно розділити колекцію на **успішні дані** та **помилки**:
+
+```scala
+val rawItems = List("10", "abc", "25", "bad")
+
+// Функція валідації повертає Either[Error, Value]:
+def parseNumber(s: String): Either[String, Int] =
+  s.toIntOption.toRight(s"Не число: '$s'")
+
+// ❌ Антипатерн (2 проходи по пам'яті + ручне розпакування):
+// val fails = rawItems.map(parseNumber).filter(_.isLeft)
+// val goods = rawItems.map(parseNumber).filter(_.isRight)
+
+// ✅ Ідіоматично (1 прохід O(N), повертає кортеж двох розпакованих списків):
+val (errors, numbers) = rawItems.partitionMap(parseNumber)
+// errors  = List("Не число: 'abc'", "Не число: 'bad'")
+// numbers = List(10, 25)
+```
+
+Детальна теорія — у [Лекції 03](03_railway_oriented_programming.md) та практиках [p03](p03_transaction_pipeline.md) / [p04](p04_heart_disease_triage.md).
+
+---
+
 ## Куди далі
 
 | Потреба | Куди |
 | ------- | ---- |
 | Паралелізм, race condition | [p00](p00_parallelism.md) |
 | Java-ish vs чисте ФП, shell | [p02](p02_javish_donation_jar.md) |
+| Railway-Oriented та `partitionMap` | [p03](p03_transaction_pipeline.md), [Лекція 03](03_railway_oriented_programming.md) |
 | Immutability, structural sharing | [Лекція 01](01_immutability_and_state.md) |
 | Офіційний тур по Scala | [Scala Docs](https://docs.scala-lang.org/tour/tour-of-scala.html) |

@@ -4,22 +4,25 @@ import javish.DonationJar
  * Демонстрація розбіжності balance і суми донатів.
  * Запуск: sbt "runMain JavishDemo" (або sbt run -> 3)
  */
-object JavishDemo extends App {
+object JavishDemo:
 
-  println("=== Банка для збору (java-ish Scala) ===\n")
+  @main def runJavishDemo(): Unit = {
+    println("=== Банка для збору (java-ish Scala) ===\n")
 
-  val jar = new DonationJar("zsu-help", 10_000.0)
+    val jar = new DonationJar("zsu-help", 10_000.0)
 
-  jar.donate(500.0, "Олена")
-  jar.donate(1_200.0, "Андрій")
-  jar.donate(300.0, "Марія")
-  jar.applyPromoBonus(250.0)
+    jar.donate(500.0, "Олена")
+    jar.donate(1_200.0, "Андрій")
+    jar.donate(300.0, "Марія")
+    jar.applyPromoBonus(250.0)
 
-  println(f"Баланс на екрані (var balance):     ${jar.balance}%.2f грн")
-  println(f"Сума з журналу донатів:             ${jar.sumFromDonations()}%.2f грн")
-  println(f"Прогрес до цілі (за balance):       ${jar.progressPercent()}%.1f%%")
+    println(f"Баланс на екрані (var balance):     ${jar.balance}%.2f грн")
+    println(f"Сума з журналу донатів:             ${jar.sumFromDonations()}%.2f грн")
+    println(f"Прогрес до цілі (за balance):       ${jar.progressPercent()}%.1f%%")
 
-  if (jar.balance != jar.sumFromDonations()) {
-    println("\n⚠️  Дві правди в одній банці. Хто головний — balance чи список донатів?")
+    if (jar.balance != jar.sumFromDonations()) {
+      println("\n⚠️  Дві правди в одній банці. Хто головний — balance чи список донатів?")
+    }
   }
-}
+
+  def main(args: Array[String]): Unit = runJavishDemo()

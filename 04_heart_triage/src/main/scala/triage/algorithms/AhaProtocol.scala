@@ -22,7 +22,7 @@ object AhaProtocol:
       Option.when(p.trestbps >= 140.0)(f"Hypertension Stage 2 (${p.trestbps}%.0f mmHg >= 140)"),
       Option.when(p.chol >= 240.0)(f"Hypercholesterolemia (${p.chol}%.0f mg/dL >= 240)"),
       Option.when(p.cp == 4.0)("Asymptomatic ischemia (Type 4 Chest Pain)"),
-      p.ca.filter(_ > 0.0).map(vessels => f"Coronary fluoroscopy calcification ($vessels%.0f vessels)"),
+      p.ca.filter(_ > 0.0).map(vessels => f"Coronary fluoroscopy calcification (${vessels}%.0f vessels)"),
       Option.when(p.fbs == 1.0 && p.trestbps >= 130.0)("Diabetic cardiovascular risk (FBS > 120 + Elevated BP)")
     )
 

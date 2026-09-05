@@ -25,7 +25,7 @@ object JsonExporter:
     sb.append(s"  \"coinsCollected\": ${summary.coinsCollected},\n")
     sb.append(s"  \"timeoutsCount\": ${summary.timeoutsCount},\n")
     val death = summary.deathReason.map(r => s"\"${escape(r)}\"").getOrElse("null")
-    sb.append(s"  \"deathReason\": $death,\n")
+    sb.append(s"  \"deathReason\": ${death},\n")
     sb.append("  \"ticks\": [\n")
 
     val ticks = summary.history
@@ -48,14 +48,14 @@ object JsonExporter:
           val itemStr = rec.slice.itemAt(lane, hgt) match
             case CellItem.Empty       => "\"Empty\""
             case CellItem.Obstacle    => "\"Obstacle\""
-            case CellItem.Coin(value) => s"{\"Coin\": $value}"
+            case CellItem.Coin(value) => s"{\"Coin\": ${value}}"
           val comma = if hIdx < 2 then "," else ""
-          sb.append(s"          \"${hgt}\": $itemStr$comma\n")
+          sb.append(s"          \"${hgt}\": ${itemStr}${comma}\n")
         val laneComma = if lIdx < Lane.values.length - 1 then "," else ""
-        sb.append(s"        }$laneComma\n")
+        sb.append(s"        }${laneComma}\n")
       sb.append("      }\n")
       val tickComma = if idx < ticks.length - 1 then "," else ""
-      sb.append(s"    }$tickComma\n")
+      sb.append(s"    }${tickComma}\n")
 
     sb.append("  ]\n")
     sb.append("}\n")

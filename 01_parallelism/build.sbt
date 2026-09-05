@@ -1,4 +1,4 @@
-scalaVersion := "2.13.12"
+scalaVersion := "3.3.3"
 name := "01_parallelism"
 version := "1.0"
 

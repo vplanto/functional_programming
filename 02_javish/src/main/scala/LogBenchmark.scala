@@ -1,7 +1,7 @@
 import javish.DonationJar
 
 /** Порівняння швидкості donate з log.info і без. Запуск: sbt "runMain LogBenchmark" */
-object LogBenchmark extends App {
+object LogBenchmark:
 
   val donationCount = 100_000
 
@@ -13,29 +13,32 @@ object LogBenchmark extends App {
     elapsedMs
   }
 
-  println(s"=== Бенчмарк: $donationCount донатів ===\n")
+  @main def runLogBenchmark(): Unit = {
+    println(s"=== Бенчмарк: $donationCount донатів ===\n")
 
-  val jarWithLog = new DonationJar("bench-log", 1_000_000_000.0)
-  val jarSilent = new DonationJar("bench-silent", 1_000_000_000.0)
+    val jarWithLog = new DonationJar("bench-log", 1_000_000_000.0)
+    val jarSilent = new DonationJar("bench-silent", 1_000_000_000.0)
 
-  // Прогрів JVM
-  jarWithLog.donateSilent(1.0, "warmup")
-  jarSilent.donateSilent(1.0, "warmup")
+    // Прогрів JVM
+    jarWithLog.donateSilent(1.0, "warmup")
+    jarSilent.donateSilent(1.0, "warmup")
 
-  val withLogMs = measure("donate + log.info") {
-    for (i <- 1 to donationCount) {
-      jarWithLog.donate(1.0, s"donor-$i")
+    val withLogMs = measure("donate + log.info") {
+      for (i <- 1 to donationCount) {
+        jarWithLog.donate(1.0, s"donor-$i")
+      }
+    }
+
+    val silentMs = measure("donate без логу (donateSilent)") {
+      for (i <- 1 to donationCount) {
+        jarSilent.donateSilent(1.0, s"donor-$i")
+      }
+    }
+
+    if (silentMs > 0) {
+      val ratio = withLogMs.toDouble / silentMs
+      println(f"\nЛогування у donate повільніше у ~${ratio}%.1f разів")
     }
   }
 
-  val silentMs = measure("donate без логу (donateSilent)") {
-    for (i <- 1 to donationCount) {
-      jarSilent.donateSilent(1.0, s"donor-$i")
-    }
-  }
-
-  if (silentMs > 0) {
-    val ratio = withLogMs.toDouble / silentMs
-    println(f"\nЛогування у donate повільніше у ~${ratio}%.1f разів")
-  }
-}
+  def main(args: Array[String]): Unit = runLogBenchmark()

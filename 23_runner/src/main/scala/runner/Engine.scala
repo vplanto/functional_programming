@@ -2,6 +2,9 @@ package runner
 
 import runner.bots.CyberBot
 import scala.collection.mutable.ListBuffer
+import scala.concurrent.{Await, Future, TimeoutException}
+import scala.concurrent.duration._
+import scala.concurrent.ExecutionContext.Implicits.global
 
 case class RunSummary(
     botName: String,
@@ -122,15 +125,24 @@ class Engine(
         val observation = Observation(hero, upcoming.toList, budgetNanos)
 
         val t0 = System.nanoTime()
-        val (botAction, wasException) =
+        val timeoutLimit = budgetNanos.nanos
+
+        // Ізоляція виклику bot.decide в окремому Future з обмеженням часу очікування (запобігає зависанню при infinite loop)
+        val decisionFuture = Future(bot.decide(observation))
+
+        val (botAction, wasTimeout, wasException) =
           try
-            (bot.decide(observation), false)
+            val action = Await.result(decisionFuture, timeoutLimit)
+            (action, false, false)
           catch
-            case e: Throwable =>
-              (Action.KeepRunning, true)
+            case _: TimeoutException =>
+              (Action.KeepRunning, true, false)
+            case _: Throwable =>
+              (Action.KeepRunning, false, true)
+
         val elapsedNanos = System.nanoTime() - t0
 
-        val isTimeout = (elapsedNanos > budgetNanos) && (mode == GameMode.Benchmark)
+        val isTimeout = wasTimeout || ((elapsedNanos > budgetNanos) && (mode == GameMode.Benchmark))
         if isTimeout then timeouts += 1
 
         val appliedAction =

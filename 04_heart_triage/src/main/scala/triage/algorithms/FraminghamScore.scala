@@ -11,79 +11,74 @@ import triage.{Diagnosis, PatientRecord, RiskLevel}
  * on Detection, Evaluation, and Treatment of High Blood Cholesterol in Adults (Adult Treatment Panel III).
  * https://www.nhlbi.nih.gov/files/docs/resources/heart/atp-3-cholesterol-full-report.pdf
  *
- * Diagnostic Logic:
- * Calculates a point-based 10-year coronary heart disease (CHD) risk:
- * - Age score (tiered by gender).
- * - Total Cholesterol score (tiered by age & gender).
- * - Systolic Blood Pressure score.
- * - Diabetes / Fasting Blood Sugar marker (+2 points).
- *
- * Risk Thresholds:
- * - High Risk: Score >= 11 points (>20% 10-year risk).
- * - Moderate Risk: Score 6..10 points (10-20% 10-year risk).
- * - Low Risk: Score < 6 points (<10% 10-year risk).
+ * Functional Architecture ("Rules as Data" & Pattern Matching):
+ * Multi-tiered scoring tables are modeled as declarative collections and evaluated
+ * via pure pattern matching, eliminating deeply nested imperative if-else cascades.
  */
 object FraminghamScore:
+
+  // 1. Таблиця вікових балів ATP III: (поріг віку, (чоловіки, жінки))
+  private val ageTiers: List[(Double, (Int, Int))] = List(
+    (35.0, (-9, -7)),
+    (40.0, (-4, -3)),
+    (45.0, ( 0,  0)),
+    (50.0, ( 3,  3)),
+    (55.0, ( 6,  6)),
+    (60.0, ( 8,  8)),
+    (65.0, (10, 10)),
+    (70.0, (11, 12)),
+    (75.0, (12, 14))
+  )
+  private val ageDefault = (13, 16) // >= 75 років
+
+  // 2. Таблиця холестеринових балів ATP III: (поріг холестерину, (Young Male, Old Male, Young Female, Old Female))
+  private val cholTiers: List[(Double, (Int, Int, Int, Int))] = List(
+    (160.0, (0, 0, 0, 0)),
+    (200.0, (4, 2, 4, 2)),
+    (240.0, (7, 5, 8, 5)),
+    (280.0, (9, 6, 11, 7))
+  )
+  private val cholDefault = (11, 8, 13, 8) // >= 280 мг/дл
+
   def evaluate(p: PatientRecord): Diagnosis =
     val isMale = p.sex >= 1.0
+    val isYoung = p.age < 50.0
 
-    // 1. Age Points
-    val agePoints = if isMale then
-      if p.age < 35 then -9
-      else if p.age < 40 then -4
-      else if p.age < 45 then 0
-      else if p.age < 50 then 3
-      else if p.age < 55 then 6
-      else if p.age < 60 then 8
-      else if p.age < 65 then 10
-      else if p.age < 70 then 11
-      else if p.age < 75 then 12
-      else 13
-    else
-      if p.age < 35 then -7
-      else if p.age < 40 then -3
-      else if p.age < 45 then 0
-      else if p.age < 50 then 3
-      else if p.age < 55 then 6
-      else if p.age < 60 then 8
-      else if p.age < 65 then 10
-      else if p.age < 70 then 12
-      else if p.age < 75 then 14
-      else 16
+    // 1. Вікові бали за табличною структурою
+    val (maleAgePts, femaleAgePts) = ageTiers
+      .find { case (threshold, _) => p.age < threshold }
+      .map(_._2)
+      .getOrElse(ageDefault)
+    val agePoints = if isMale then maleAgePts else femaleAgePts
 
-    // 2. Cholesterol Points (ATP III age-stratified)
-    val cholPoints = if isMale then
-      if p.chol < 160.0 then 0
-      else if p.chol < 200.0 then (if p.age < 50 then 4 else 2)
-      else if p.chol < 240.0 then (if p.age < 50 then 7 else 5)
-      else if p.chol < 280.0 then (if p.age < 50 then 9 else 6)
-      else (if p.age < 50 then 11 else 8)
-    else
-      if p.chol < 160.0 then 0
-      else if p.chol < 200.0 then (if p.age < 50 then 4 else 2)
-      else if p.chol < 240.0 then (if p.age < 50 then 8 else 5)
-      else if p.chol < 280.0 then (if p.age < 50 then 11 else 7)
-      else (if p.age < 50 then 13 else 8)
+    // 2. Холестеринові бали за ATP III стратифікацією (Rules as Data)
+    val (ym, om, yf, of) = cholTiers
+      .find { case (threshold, _) => p.chol < threshold }
+      .map(_._2)
+      .getOrElse(cholDefault)
 
-    // 3. Systolic Blood Pressure Points (trestbps)
-    val bpPoints =
-      if p.trestbps < 120.0 then 0
-      else if p.trestbps < 130.0 then 0
-      else if p.trestbps < 140.0 then 1
-      else if p.trestbps < 160.0 then 1
-      else 2
+    val cholPoints = (isMale, isYoung) match
+      case (true, true)   => ym
+      case (true, false)  => om
+      case (false, true)  => yf
+      case (false, false) => of
 
-    // 4. Diabetes Comorbidity Points
-    val diabetesPoints = if p.fbs == 1.0 then 2 else 0
+    // 3. Систолічний тиск (Pattern Matching)
+    val bpPoints = p.trestbps match
+      case bp if bp < 130.0 => 0
+      case bp if bp < 160.0 => 1
+      case _                => 2
+
+    // 4. Цукровий діабет (Rules as Data через Option.when)
+    val diabetesPoints = Option.when(p.fbs == 1.0)(2).getOrElse(0)
 
     val totalPoints = agePoints + cholPoints + bpPoints + diabetesPoints
 
-    val risk = if totalPoints >= 11 then
-      RiskLevel.High
-    else if totalPoints >= 6 then
-      RiskLevel.Moderate
-    else
-      RiskLevel.Low
+    // 5. Декларативна стратифікація ризику через Pattern Matching
+    val risk = totalPoints match
+      case pts if pts >= 11 => RiskLevel.High
+      case pts if pts >= 6  => RiskLevel.Moderate
+      case _                => RiskLevel.Low
 
     val reasoning = f"Framingham ATP III score: $totalPoints pts (Age: $agePoints, Chol: $cholPoints, BP: $bpPoints, Diab: $diabetesPoints)"
 

@@ -3,7 +3,7 @@ import fp.JarLogic._
 import org.slf4j.LoggerFactory
 
 /** Imperative Shell: `var` і логування на краю; `JarLogic` — чисте ядро. Запуск: sbt "runMain DonationApp" */
-object DonationApp extends App {
+object DonationApp:
 
   private val log = LoggerFactory.getLogger(getClass)
 
@@ -24,10 +24,13 @@ object DonationApp extends App {
     )
   }
 
-  handleUserDonation(500.0, "Олена")
-  handleUserDonation(1_200.0, "Андрій")
-  handleUserDonation(300.0, "Марія")
-  handlePromoBonus(250.0)
+  @main def runDonationApp(): Unit = {
+    handleUserDonation(500.0, "Олена")
+    handleUserDonation(1_200.0, "Андрій")
+    handleUserDonation(300.0, "Марія")
+    handlePromoBonus(250.0)
 
-  log.info(f"Підсумок: ${total(currentJar)}%.0f грн, прогрес ${progressPercent(currentJar)}%.1f%%")
-}
+    log.info(f"Підсумок: ${total(currentJar)}%.0f грн, прогрес ${progressPercent(currentJar)}%.1f%%")
+  }
+
+  def main(args: Array[String]): Unit = runDonationApp()
