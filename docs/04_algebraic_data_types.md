@@ -162,11 +162,20 @@ enum MyList[+A]:
 import MyList._
 val numbers = Cons(1, Cons(2, Cons(3, Nil)))
 
-// Рекурсивний підрахунок суми через вичерпний Pattern Matching:
-def sum(list: MyList[Int]): Int = list match
-  case Nil         => 0
-  case Cons(x, xs) => x + sum(xs)
+import scala.annotation.tailrec
+
+// Хвостово-рекурсивний підрахунок суми (Stack-Safe: O(1) стеку, оптимізується компілятором у цикл):
+def sum(list: MyList[Int]): Int =
+  @tailrec
+  def loop(curr: MyList[Int], acc: Int): Int = curr match
+    case MyList.Nil         => acc
+    case MyList.Cons(x, xs) => loop(xs, acc + x)
+
+  loop(list, 0)
 ```
+
+> 💡 **Чому це критично для Production (@tailrec):**  
+> Наївний виклик `case Cons(x, xs) => x + sum(xs)` не є хвостовим: операція `+` змушує JVM тримати у стеку всі попередні виклики. На списку з 100 000 елементів це призведе до **`java.lang.StackOverflowError`**. Анотація `@tailrec` гарантує, що компілятор перетворить рекурсію на звичайний плоский цикл байткоду без зростання стеку пам'яті.
 
 ---
 

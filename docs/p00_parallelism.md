@@ -120,13 +120,13 @@ val result = (1 to 100)        // 1. Генеруємо числа від 1 до
 
 > **📚 Що потрібно знати для виконання:**
 > 1. Теоретична база: чому ми відмовляємося від `var` і що таке чисті функції — читайте у [Лекції 01: Основи ФП](01_immutability_and_state.md).
-> 2. Як працює синтаксис `match` у Scala: [Офіційна документація по Pattern Matching](https://docs.scala-lang.org/tour/pattern-matching.html).
+> 2. **Expression-Oriented Programming:** У Scala конструкція `if-else` є виразом, що повертає значення (як тернарний оператор `?:` у C++/Java), а не інструкцією.
 > 3. Як працюють колекції (`filter`, `map`): [Офіційна документація по Collections API](https://docs.scala-lang.org/scala3/book/collections-methods.html).
 
 Досить використовувати імперативний підхід з `var`. Напишіть чистий код, де все є виразом (Expression-Oriented Programming).
-1. У файлі `Workshop.scala` є заготовки для Алгебраїчних Типів Даних (ADT) `RiskLevel`.
-2. Реалізуйте чисту функцію `categorize`, використовуючи **Pattern Matching** (`match`). Ніяких `if-else` чи присвоювань змінних!
-3. Реалізуйте чисту функцію `getMultiplier` так само через `match`.
+1. У файлі `Workshop.scala` є готові типи `RiskLevel` (глибоке проєктування власних ADT чекає на вас у [Лекції 04](04_algebraic_data_types.md)).
+2. Реалізуйте чисту функцію `categorize`, використовуючи **чистий вираз `if-else`**. Жодних змінних `var` чи блоків без повернення результату!
+3. Реалізуйте чисту функцію `getMultiplier` так само через `if-else` (або `match`, якщо вже знайомі).
 4. Напишіть чистий конвеєр (`.filter(...).map(...).sum`), який спочатку фільтрує транзакції, а потім застосовує до них ваші функції.
 
 ### Завдання 3: Запуск Unit-тестів
@@ -148,17 +148,16 @@ sbt test
 <summary>Спойлер: Референсне рішення (Завдання 2)</summary>
 
 ```scala
-def categorize(amount: Double): RiskLevel = amount match {
-  case a if a > 80.0 => HighRisk
-  case a if a > 50.0 => MediumRisk
-  case _             => LowRisk
-}
+// Референсний підхід через Expression-Oriented if-else:
+def categorize(amount: Double): RiskLevel =
+  if amount > 80.0 then HighRisk
+  else if amount > 50.0 then MediumRisk
+  else LowRisk
 
-def getMultiplier(level: RiskLevel): Double = level match {
-  case HighRisk   => 1.5
-  case MediumRisk => 1.2
-  case LowRisk    => 1.0
-}
+def getMultiplier(level: RiskLevel): Double =
+  if level == HighRisk then 1.5
+  else if level == MediumRisk then 1.2
+  else 1.0
 
 val finalRiskSum = data.par
   .filter(_ > 50.0)

@@ -137,6 +137,33 @@ def safeCall(): Either[ApiError, String] =
     }
 ```
 
+### 3.2. Автоматичне вивільнення ресурсів: `scala.util.Using` замість `try-finally`
+
+У реальних додатках робота з файлами, сокетами чи з'єднаннями з БД потребує не лише безпечного перехоплення помилок, а й **гарантованого закриття системних дескрипторів**.  
+В імперативній практиці забутий `.close()` призводить до аварії операційної системи — вичерпання дескрипторів (**`java.io.IOException: Too many open files`**) та падіння JVM.
+
+У Scala для ідіоматичного керування життєвим циклом ресурсів використовується бібліотека **`scala.util.Using`**:
+
+```scala
+import scala.io.Source
+import scala.util.{Try, Using}
+
+// Варіант А: Using.resource — повертає чистий результат і гарантує виклик .close():
+val linesCount: Int = Using.resource(Source.fromFile("data.csv")) { source =>
+  source.getLines().size
+}
+
+// Варіант Б: Using(...) — безпечно загортає результат і винятки I/O у контейнер Try:
+val safeLines: Try[List[String]] = Using(Source.fromFile("data.csv")) { source =>
+  source.getLines().toList
+}
+```
+
+#### Чому це краще за класичний Java `try-finally`:
+* **Повна підтримка Java-interop:** Працює з будь-яким класом, що реалізує інтерфейс `java.lang.AutoCloseable` (`InputStream`, `Connection`, `Socket`, `Source`).
+* **Коректне придушення винятків (Suppressed Exceptions):** Якщо тіло обчислення впало з помилкою, а потім метод `.close()` теж кинув виняток, `Using` не затре первинну бізнес-помилку, а додасть виняток закриття у список придушених (`suppressed`).
+* **Використання у курсі:** Саме за допомогою `Using.resource(Source.fromFile(path))` ми безпечно завантажуємо медичний датасет у [Практиці 04: Main.scala](p04_heart_disease_triage.md), виключаючи витік пам'яті та дескрипторів.
+
 ---
 
 ## 4. Концепція Railway-Oriented Programming (ROP) на `Either`
@@ -170,7 +197,7 @@ def validatePassword(pass: String): Either[RegistrationError, String] =
   else Left(RegistrationError.WeakPassword("Пароль має містити мінімум 8 символів"))
 ```
 
-### 3.3. Пакетна залізнична обробка: Анатомія методу `partitionMap`
+### 4.1. Пакетна залізнична обробка: Анатомія методу `partitionMap`
 
 Що робити, коли на вхід надходить не одна транзакція, а батч із 100 000 записів, кожен із яких валідується у `Either[ParsingError, Transaction]`?
 
@@ -344,4 +371,10 @@ val result: Either[AppError, Receipt] =
 <summary>3. Що розгортає компілятор під капотом for-comprehension?</summary>
 
 Кожен рядок `x <- step` у `for-comprehension` компілятор Scala послідовно перетворює на виклики методів `.flatMap(...)`, а фінальний блок `yield` — на виклик `.map(...)`. Жодних магічних циклів під капотом немає — це чиста функціональна композиція.
+</details>
+
+<details>
+<summary>4. Чому для I/O операцій у Scala слід обирати scala.util.Using замість звичайного try-finally?</summary>
+
+`scala.util.Using` гарантує виклик `.close()` для будь-якого `AutoCloseable` ресурсу, навіть якщо стається помилка під час обробки. Крім того, він коректно підтримує придушені винятки (suppressed exceptions), не затираючи первинну бізнес-помилку, якщо збій стався і в тілі обчислення, і під час виклику `.close()`.
 </details>

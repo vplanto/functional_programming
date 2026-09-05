@@ -1,10 +1,21 @@
 package runner
 
 import runner.bots.CyberBot
+import java.util.concurrent.Executors
 import scala.collection.mutable.ListBuffer
-import scala.concurrent.{Await, Future, TimeoutException}
+import scala.concurrent.{Await, ExecutionContext, Future, TimeoutException}
 import scala.concurrent.duration._
-import scala.concurrent.ExecutionContext.Implicits.global
+
+object Engine:
+  private val botThreadPool = Executors.newFixedThreadPool(
+    4,
+    (r: Runnable) => {
+      val t = new Thread(r, "cyberbot-isolated-worker")
+      t.setDaemon(true)
+      t
+    }
+  )
+  private val botExecutionContext: ExecutionContext = ExecutionContext.fromExecutor(botThreadPool)
 
 case class RunSummary(
     botName: String,
@@ -127,8 +138,8 @@ class Engine(
         val t0 = System.nanoTime()
         val timeoutLimit = budgetNanos.nanos
 
-        // Ізоляція виклику bot.decide в окремому Future з обмеженням часу очікування (запобігає зависанню при infinite loop)
-        val decisionFuture = Future(bot.decide(observation))
+        // Ізоляція виклику bot.decide в окремому Future на виділеному botExecutionContext (запобігає starvation глобального пулу CPU)
+        val decisionFuture = Future(bot.decide(observation))(Engine.botExecutionContext)
 
         val (botAction, wasTimeout, wasException) =
           try

@@ -213,10 +213,15 @@ enum ParsingError:
 // Сигнатура чесно попереджає про можливість помилки:
 def parsePatient(line: String, rowIdx: Int): Either[ParsingError, PatientRecord]
 
-// Розподіл на успішні та пошкоджені записи за один прохід без мутацій:
-val (errors, validPatients) = parsedLines.partitionMap(identity)
+// Безпечне читання з автозакриттям дескриптора (Лекція 03):
+Using.resource(Source.fromFile(path)) { source =>
+  // Розподіл на успішні та пошкоджені записи за один прохід без мутацій:
+  val (errors, validPatients) = parsedLines.partitionMap(identity)
+  ...
+}
 ```
-Завдяки `partitionMap` конвеєр не падає і нічого не приховує: дефектні рядки логуються з точним номером і полем, а валідні пацієнти негайно надходять у консиліум.
+* Завдяки `scala.util.Using.resource` файловий дескриптор гарантовано закривається навіть у разі аварії парсингу (деталі у [Лекції 03: Розділ 3.2](03_railway_oriented_programming.md#32-автоматичне-вивільнення-ресурсів-scalautilusing-замість-try-finally)).
+* Завдяки `partitionMap` конвеєр не падає і нічого не приховує: дефектні рядки логуються з точним номером і полем, а валідні пацієнти негайно надходять у консиліум.
 
 ---
 

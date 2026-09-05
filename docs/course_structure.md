@@ -38,7 +38,7 @@
 5. **Лекція 04:** [Моделювання предметної області: Алгебраїчні типи даних (ADT) та Pattern Matching](04_algebraic_data_types.md) — типи-суми, типи-добутки, Smart Constructors, унеможливлення невалідних станів.
 6. **Лекція 05:** [Від синхронного I/O до асинхронності: криза Thread-per-Request та анатомія Future](05_async_futures_and_non_blocking.md) — обчислювальні ефекти, монадичний контекст часу, неблокуючий I/O, `ExecutionContext`.
 7. **Лекція 06:** [Реактивні потоки, Backpressure та траблшутинг](06_reactive_streams_and_troubleshooting.md) — Reactive Streams, Project Reactor / Akka Streams, пастки дебагу, контексти.
-8. **Лекція 07:** [Фінал: Модель Акторів, Event Sourcing у 23_runner та путівник до іспиту](07_actors_event_sourcing_and_exam.md) — Akka/Pekko актори, ізоляція стану, Event Sourcing, архітектурний підсумок.
+8. **Лекція 07:** [Фінал: Модель Акторів, патерн Functional Core / Imperative Shell у 23_runner та путівник до іспиту](07_actors_event_sourcing_and_exam.md) — Pekko/Akka актори (концепція для мультиплеєра), чисте ядро vs імперативна оболонка рушія, Event Log, архітектурний підсумок.
 
 ### Методичний вибір: Прагматичний монадичний контекст замість абстрактної теорії категорій
 

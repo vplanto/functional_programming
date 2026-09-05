@@ -6,31 +6,29 @@ object Workshop:
   // ЗАВДАННЯ 2: РЕФАКТОРИНГ В ЧИСТЕ ФП (EXPRESSION-ORIENTED)
   // =========================================================================
   
-  // 1. Оголошуємо Алгебраїчні Типи Даних (ADT) для бізнес-домену
+  // 1. Готові рівні ризику бізнес-домену:
   sealed trait RiskLevel
   case object HighRisk extends RiskLevel
   case object MediumRisk extends RiskLevel
   case object LowRisk extends RiskLevel
 
-  // 2. Ваше завдання: реалізувати чисту функцію класифікації без жодного var чи if-else.
-  // Використайте Pattern Matching (match).
+  // 2. Ваше завдання: реалізувати чисту функцію класифікації як ВИРАЗ (без var).
+  // У Scala звичайний `if-else` повертає значення (як тернарний оператор у C++/Java).
   // Умова:
   // - Якщо amount > 80.0 -> HighRisk
   // - Якщо amount > 50.0 -> MediumRisk
   // - Інакше -> LowRisk
-  def categorize(amount: Double): RiskLevel = {
-    // ТУТ ВАШ КОД
+  def categorize(amount: Double): RiskLevel =
+    // ТУТ ВАШ КОД (використайте чистий if-else вираз)
     LowRisk // Заглушка, щоб код компілювався
-  }
 
-  // 3. Реалізуйте чисту функцію для отримання коефіцієнта.
+  // 3. Реалізуйте чисту функцію для отримання коефіцієнта (як вираз):
   // HighRisk -> 1.5, MediumRisk -> 1.2, LowRisk -> 1.0
-  def getMultiplier(level: RiskLevel): Double = {
-    // ТУТ ВАШ КОД
+  def getMultiplier(level: RiskLevel): Double =
+    // ТУТ ВАШ КОД (використайте if-else або простий match)
     1.0 // Заглушка
-  }
 
-  @main def runWorkshop(): Unit = {
+  @main def runWorkshop(): Unit =
     println("=== Практика 00: Вмикаємо мозок ===")
 
     // Генеруємо 100 транзакцій для швидких тестів (від 1 до 100)
@@ -67,6 +65,5 @@ object Workshop:
       .map(???)
       .sum
     */
-  }
 
   def main(args: Array[String]): Unit = runWorkshop()

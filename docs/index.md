@@ -20,7 +20,7 @@
 - [04. Моделювання предметної області: Алгебраїчні типи даних (ADT) та Pattern Matching](04_algebraic_data_types.md)
 - [05. Від синхронного I/O до асинхронності: криза Thread-per-Request, ефекти та анатомія Future](05_async_futures_and_non_blocking.md)
 - [06. Реактивні потоки, Backpressure та траблшутинг: чому реактивність важко дебажити](06_reactive_streams_and_troubleshooting.md)
-- [07. Фінал: Модель Акторів, Event Sourcing у 23_runner та путівник до іспиту](07_actors_event_sourcing_and_exam.md)
+- [07. Фінал: Модель Акторів (Pekko/Akka), патерн Functional Core / Imperative Shell та путівник до іспиту](07_actors_event_sourcing_and_exam.md)
 
 ### Самостійна робота
 - [n00. Налаштування середовища та Git](n00_env_and_git.md)
