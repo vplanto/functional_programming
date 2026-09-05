@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cyber Tunnel Runner — Replay Viewer</title>
+  <style>
+    :root {
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --border: #e2e8f0;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --accent: #4f46e5;
+      --accent-light: #eef2ff;
+      --success: #059669;
+      --success-light: #ecfdf5;
+      --danger: #e11d48;
+      --danger-light: #fff1f2;
+      --warning: #d97706;
+      --warning-light: #fffbeb;
+      --lane-line: #cbd5e1;
+      --shadow: 0 4px 16px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -2px rgba(15, 23, 42, 0.03);
+    }
+
+    html {
+      overflow-y: scroll;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background-color: var(--bg);
+      color: var(--text-main);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1020px;
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+
+    /* Top Bar */
+    .top-bar {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: var(--shadow);
+    }
+
+    .title-area h1 {
+      font-size: 1.3rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .title-area span {
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      font-weight: 500;
+    }
+
+    .file-loader {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+
+    .btn:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .metric-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-shadow: var(--shadow);
+      min-height: 84px;
+      height: 84px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .metric-card .label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      margin-bottom: 4px;
+      font-weight: 600;
+    }
+
+    .metric-card .value {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      font-feature-settings: "tnum";
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      line-height: 1.3;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .badge-running { background: #e0f2fe; color: #0369a1; }
+    .badge-jumping { background: #fef3c7; color: #b45309; }
+    .badge-ducking { background: #f3e8ff; color: #7e22ce; }
+    .badge-crashed { background: var(--danger-light); color: var(--danger); }
+
+    /* Canvas Stage */
+    .stage-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    canvas {
+      width: 100%;
+      height: 420px;
+      background: #ffffff;
+      border: 1px solid #edf2f7;
+      border-radius: 8px;
+      display: block;
+    }
+
+    /* Status Banner */
+    .status-banner {
+      width: 100%;
+      height: 44px;
+      min-height: 44px;
+      margin-top: 12px;
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      white-space: nowrap;
+      overflow: hidden;
+    }
+    .status-banner.normal { background: #f8fafc; color: var(--text-muted); border: 1px solid var(--border); }
+    .status-banner.crashed { background: var(--danger-light); color: var(--danger); border: 1px solid #fecdd3; }
+    .status-banner.finished { background: var(--success-light); color: var(--success); border: 1px solid #a7f3d0; }
+
+    /* Player Controls */
+    .controls-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px 24px;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .timeline-row {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .timeline-slider {
+      flex: 1;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .time-readout {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      min-width: 90px;
+      text-align: right;
+    }
+
+    .buttons-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .play-btns {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .speed-select {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Legend */
+    .legend-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      justify-content: center;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      padding: 4px 0;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .legend-indicator {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <!-- Top Bar -->
+  <div class="top-bar">
+    <div class="title-area">
+      <h1>🏃 Cyber Tunnel Runner <span>Replay Viewer</span></h1>
+    </div>
+    <div class="file-loader">
+      <input type="file" id="fileInput" accept=".json" style="display: none;">
+      <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+        📁 Завантажити JSON (.json)
+      </button>
+      <span id="loadedFileName" style="font-size: 0.8rem; color: var(--text-muted);">Очікування файлу...</span>
+    </div>
+  </div>
+
+  <!-- Telemetry Metrics -->
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="label">Дистанція / Тік</div>
+      <div class="value" id="distVal">0 м (0)</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Очки / Монети</div>
+      <div class="value" id="scoreVal">0 pts (0 🪙)</div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Положення герою</div>
+      <div class="value" id="stanceVal"><span class="badge badge-running">Running</span></div>
+    </div>
+    <div class="metric-card">
+      <div class="label">Наказ на наст. тік</div>
+      <div class="value" id="actionVal">KeepRunning</div>
+    </div>
+  </div>
+
+  <!-- Stage Canvas -->
+  <div class="stage-card">
+    <canvas id="tunnelCanvas" width="980" height="420"></canvas>
+    <div class="status-banner normal" id="statusBanner">
+      <span id="bannerText">Завантажте run_replay.json або натисніть «Запустити Демо»</span>
+      <span id="botDetailsText">Очікування запуску...</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-card">
+    <div class="timeline-row">
+      <input type="range" id="timeline" class="timeline-slider" min="0" max="0" value="0">
+      <div class="time-readout" id="timeReadout">0 / 0</div>
+    </div>
+    <div class="buttons-row">
+      <div class="play-btns">
+        <button class="btn btn-primary" id="btnPlayPause">▶ Старт</button>
+        <button class="btn" id="btnPrev">⏮ Попередній</button>
+        <button class="btn" id="btnNext">Наступний ⏭</button>
+        <button class="btn" id="btnReset">⟲ Спочатку</button>
+      </div>
+      <div>
+        <label for="speedSelect" style="font-size: 0.85rem; color: var(--text-muted); margin-right: 6px;">Швидкість:</label>
+        <select id="speedSelect" class="speed-select">
+          <option value="0.5">0.5x</option>
+          <option value="1" selected>1x</option>
+          <option value="2">2x</option>
+          <option value="4">4x</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend-row">
+    <div class="legend-item"><div class="legend-indicator" style="background: #4f46e5;"></div> Герой (@)</div>
+    <div class="legend-item"><div class="legend-indicator" style="background: #e11d48;"></div> Бар'єр [Рівень 0, Низ] ➔ вимагає <b>Jump</b></div>
+    <div class="legend-item"><div class="legend-indicator" style="background: #f97316;"></div> Лазер [Рівень 1, Середина] ➔ вимагає <b>Duck / Jump</b></div>
+    <div class="legend-item"><div class="legend-indicator" style="background: #7c3aed;"></div> Балка [Рівень 2, Стеля] ➔ вимагає <b>Run / Duck</b></div>
+    <div class="legend-item"><div class="legend-indicator" style="background: #eab308;"></div> Монета ($10-$50)</div>
+  </div>
+</div>
+
+<script>
+// Стан плеєра (дані завантажуються виключно з JSON-файлів)
+let runData = null;
+let currentTickIdx = 0;
+let isPlaying = false;
+let playInterval = null;
+let playbackSpeed = 1;
+let animOffset = 0;
+
+// DOM елементи
+const canvas = document.getElementById("tunnelCanvas");
+const ctx = canvas.getContext("2d");
+const timeline = document.getElementById("timeline");
+const btnPlayPause = document.getElementById("btnPlayPause");
+const btnPrev = document.getElementById("btnPrev");
+const btnNext = document.getElementById("btnNext");
+const btnReset = document.getElementById("btnReset");
+const speedSelect = document.getElementById("speedSelect");
+const fileInput = document.getElementById("fileInput");
+
+const distVal = document.getElementById("distVal");
+const scoreVal = document.getElementById("scoreVal");
+const stanceVal = document.getElementById("stanceVal");
+const actionVal = document.getElementById("actionVal");
+const timeReadout = document.getElementById("timeReadout");
+const statusBanner = document.getElementById("statusBanner");
+const bannerText = document.getElementById("bannerText");
+const botDetailsText = document.getElementById("botDetailsText");
+const loadedFileName = document.getElementById("loadedFileName");
+
+function initRun(data, fileName = "Файл завантажено") {
+  runData = data;
+  currentTickIdx = 0;
+  pause();
+  timeline.max = Math.max(0, runData.ticks.length - 1);
+  timeline.value = 0;
+  loadedFileName.textContent = `${fileName} (${runData.ticks.length} тіків)`;
+  botDetailsText.textContent = `Bot: ${runData.botName} | Mode: ${runData.mode} | Seed: ${runData.seed}`;
+  renderTick(0);
+}
+
+function renderTick(idx) {
+  if (!runData || !runData.ticks || runData.ticks.length === 0) return;
+  idx = Math.max(0, Math.min(idx, runData.ticks.length - 1));
+  currentTickIdx = idx;
+  timeline.value = idx;
+
+  const cur = runData.ticks[idx];
+
+  distVal.textContent = `${cur.distance} м (#${cur.tick})`;
+  scoreVal.textContent = `${cur.score} pts`;
+  actionVal.textContent = `➔ ${cur.action} (${cur.responseTimeUs}µs)`;
+  timeReadout.textContent = `${idx} / ${runData.ticks.length - 1}`;
+
+  let badgeClass = "badge-running";
+  if (!cur.alive) badgeClass = "badge-crashed";
+  else if (cur.stance === "Jumping") badgeClass = "badge-jumping";
+  else if (cur.stance === "Ducking") badgeClass = "badge-ducking";
+  stanceVal.innerHTML = `<span class="badge ${badgeClass}">${!cur.alive ? "Crashed" : cur.stance} (${cur.lane})</span>`;
+
+  if (!cur.alive) {
+    statusBanner.className = "status-banner crashed";
+    bannerText.textContent = `💥 АВАРІЯ на тіку #${cur.tick}: ${runData.deathReason || "Зіткнення"}`;
+  } else if (idx === runData.ticks.length - 1) {
+    statusBanner.className = "status-banner finished";
+    bannerText.textContent = `🏁 Фініш забігу! Подолано: ${cur.distance} м | Рахунок: ${cur.score}`;
+  } else {
+    statusBanner.className = "status-banner normal";
+    bannerText.innerHTML = `Тік #${cur.tick} | Стан: <b>${cur.stance} (${cur.lane})</b> | Наказ на наст. тік ➔ <b style="color: var(--accent); background: var(--accent-light); padding: 2px 8px; border-radius: 4px;">${cur.action}</b>`;
+  }
+
+  drawScene(idx);
+}
+
+function getPerspectiveProjection(laneIdx, depth) {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  const horizonY = 70;
+  const baseY = h - 30;
+
+  const baseLeftX = 100;
+  const baseRightX = w - 100;
+  const horizonLeftX = w * 0.38;
+  const horizonRightX = w * 0.62;
+
+  const t = Math.pow(depth / 5, 0.7);
+  const y = baseY - (baseY - horizonY) * t;
+
+  const leftX = baseLeftX + (horizonLeftX - baseLeftX) * t;
+  const rightX = baseRightX + (horizonRightX - baseRightX) * t;
+
+  const laneWidth = (rightX - leftX) / 3;
+  const x = leftX + laneWidth * (laneIdx + 0.5);
+  const scale = (1 - t * 0.75);
+
+  return { x, y, scale, laneWidth, t };
+}
+
+function drawScene(tickIdx) {
+  const w = canvas.width;
+  const h = canvas.height;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, w, h);
+
+  const horizonY = 70;
+  const baseY = h - 30;
+  const baseLeftX = 100;
+  const baseRightX = w - 100;
+  const horizonLeftX = w * 0.38;
+  const horizonRightX = w * 0.62;
+
+  // 1. Малювання дискретної 3D-сітки підлоги та секцій (d = 4 -> 0)
+  for (let d = 4; d >= 0; d--) {
+    const pFront0 = getPerspectiveProjection(0, d);
+    const pFront2 = getPerspectiveProjection(2, d);
+    const pBack0 = getPerspectiveProjection(0, d + 1);
+    const pBack2 = getPerspectiveProjection(2, d + 1);
+
+    const fLeft = pFront0.x - pFront0.laneWidth * 0.5;
+    const fRight = pFront2.x + pFront2.laneWidth * 0.5;
+    const bLeft = pBack0.x - pBack0.laneWidth * 0.5;
+    const bRight = pBack2.x + pBack2.laneWidth * 0.5;
+
+    // Плитка секції: чергування відтінків для максимальної розбірливості глибини
+    if (d === 0) {
+      ctx.fillStyle = "#eef2ff"; // М'яка підсвітка поточного зрізу (де зараз герой)
+    } else if (d === 1) {
+      ctx.fillStyle = "#fffbeb"; // Підсвітка наступного зрізу (+1м, куди летить дія)
+    } else {
+      ctx.fillStyle = (d % 2 === 0) ? "#f8fafc" : "#f1f5f9";
+    }
+
+    ctx.beginPath();
+    ctx.moveTo(fLeft, pFront0.y);
+    ctx.lineTo(fRight, pFront2.y);
+    ctx.lineTo(bRight, pBack2.y);
+    ctx.lineTo(bLeft, pBack0.y);
+    ctx.closePath();
+    ctx.fill();
+
+    // Поперечна лінія зрізу сітки
+    ctx.strokeStyle = (d === 0) ? "#6366f1" : (d === 1 ? "#f59e0b" : "#cbd5e1");
+    ctx.lineWidth = (d === 0 || d === 1) ? 2.5 : 1.5;
+    ctx.beginPath();
+    ctx.moveTo(fLeft, pFront0.y);
+    ctx.lineTo(fRight, pFront2.y);
+    ctx.stroke();
+
+    // Бічні маркери дистанції на узбіччі
+    ctx.fillStyle = (d === 0) ? "#4f46e5" : (d === 1 ? "#d97706" : "#94a3b8");
+    ctx.font = (d === 0 || d === 1) ? "bold 11px sans-serif" : "10px sans-serif";
+    ctx.textAlign = "right";
+    const labelText = (d === 0) ? `📍 0м (Зараз)` : (d === 1 ? `⏱️ +1м (Наст.)` : `+${d}м`);
+    ctx.fillText(labelText, fLeft - 8, pFront0.y + 4);
+    ctx.textAlign = "left";
+    ctx.fillText(labelText, fRight + 8, pFront2.y + 4);
+  }
+
+  // Замикаюча лінія горизонту (d = 5)
+  const pFar0 = getPerspectiveProjection(0, 5);
+  const pFar2 = getPerspectiveProjection(2, 5);
+  ctx.strokeStyle = "#cbd5e1";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(pFar0.x - pFar0.laneWidth * 0.5, pFar0.y);
+  ctx.lineTo(pFar2.x + pFar2.laneWidth * 0.5, pFar2.y);
+  ctx.stroke();
+
+  // 2. Поздовжні лінії розділення трьох смуг
+  for (let i = 1; i <= 2; i++) {
+    const bX = baseLeftX + (baseRightX - baseLeftX) * (i / 3);
+    const hX = horizonLeftX + (horizonRightX - horizonLeftX) * (i / 3);
+    ctx.strokeStyle = "#94a3b8";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.moveTo(bX, baseY);
+    ctx.lineTo(hX, horizonY);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  // Бічні бортики тунелю
+  ctx.strokeStyle = "#64748b";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(baseLeftX, baseY);
+  ctx.lineTo(horizonLeftX, horizonY);
+  ctx.moveTo(baseRightX, baseY);
+  ctx.lineTo(horizonRightX, horizonY);
+  ctx.stroke();
+
+  // Підписи смуг
+  const p0 = getPerspectiveProjection(0, 0);
+  const p1 = getPerspectiveProjection(1, 0);
+  const p2 = getPerspectiveProjection(2, 0);
+
+  ctx.fillStyle = "#64748b";
+  ctx.font = "bold 12px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText("LEFT LANE", p0.x, baseY + 20);
+  ctx.fillText("CENTER LANE", p1.x, baseY + 20);
+  ctx.fillText("RIGHT LANE", p2.x, baseY + 20);
+
+  if (!runData) {
+    // Екран очікування файлу
+    ctx.fillStyle = "#4f46e5";
+    ctx.font = "bold 16px sans-serif";
+    ctx.fillText("📁 Завантажте run_replay.json або виберіть demo_replay.json", w / 2, h / 2 - 10);
+    ctx.fillStyle = "#64748b";
+    ctx.font = "14px sans-serif";
+    ctx.fillText("Перетягніть файл JSON у це вікно з провідника", w / 2, h / 2 + 18);
+    drawHero(p1.x, baseY, "Running", true);
+    return;
+  }
+
+  const curTick = runData.ticks[tickIdx];
+  const laneIdxMap = { "Left": 0, "Center": 1, "Right": 2 };
+  const lanes = ["Left", "Center", "Right"];
+
+  // 3. Малюємо об'єкти від далекого горизонту до ближнього (depth 4 -> 0)
+  for (let lookDepth = 4; lookDepth >= 0; lookDepth--) {
+    const targetTickIdx = tickIdx + lookDepth;
+    if (targetTickIdx >= runData.ticks.length) continue;
+
+    const sliceData = runData.ticks[targetTickIdx].slice;
+    if (!sliceData) continue;
+
+    lanes.forEach(lName => {
+      const lIdx = laneIdxMap[lName];
+      const p = getPerspectiveProjection(lIdx, lookDepth);
+      const laneSlice = sliceData[lName] || {};
+
+      ["Low", "Mid", "High"].forEach(hType => {
+        const item = laneSlice[hType];
+        if (!item || item === "Empty") return;
+
+        // Якщо на нульовій глибині (depth 0) монетка на смузі героя вже зібрана — не малюємо її під ногами
+        if (lookDepth === 0 && lName === curTick.lane && item.Coin !== undefined) {
+          const isCollected = (curTick.stance === "Running" && (hType === "Low" || hType === "Mid")) ||
+                              (curTick.stance === "Jumping" && hType === "High") ||
+                              (curTick.stance === "Ducking" && hType === "Low");
+          if (isCollected) return;
+        }
+
+        drawCellItem3D(p, item, hType);
+      });
+    });
+  }
+
+  // 4. Малюємо героя
+  const heroLaneIdx = laneIdxMap[curTick.lane];
+  const heroP = getPerspectiveProjection(heroLaneIdx, 0);
+  drawHero(heroP.x, heroP.y, curTick.stance, curTick.alive);
+}
+
+function drawCellItem3D(p, item, heightType) {
+  if (!item || item === "Empty") return;
+
+  const s = p.scale;
+  const x = p.x;
+  let y = p.y;
+
+  if (heightType === "Low") {
+    y = p.y - 12 * s;
+  } else if (heightType === "Mid") {
+    y = p.y - 75 * s;
+  } else if (heightType === "High") {
+    y = p.y - 180 * s; // Високо під стелею тунелю
+  }
+
+  if (item === "Obstacle") {
+    if (heightType === "Low") {
+      // 0 (Низ): Червоний дорожній бар'єр (вимагає стрибка)
+      const w = 56 * s;
+      const h = 20 * s;
+
+      // Тінь бар'єра на підлозі
+      ctx.fillStyle = "rgba(225, 29, 72, 0.25)";
+      ctx.beginPath();
+      ctx.ellipse(x, p.y - 2, (w / 2) * 0.9, 5 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#e11d48";
+      ctx.strokeStyle = "#9f1239";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.roundRect(x - w / 2, y - h / 2, w, h, 4 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // Смужки безпеки
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(x - w / 4, y - h / 2, 6 * s, h);
+      ctx.fillRect(x + w / 6, y - h / 2, 6 * s, h);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold ${Math.max(7, Math.round(8 * s))}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("LOW [0]", x, y + 3 * s);
+    } else if (heightType === "Mid") {
+      // 1 (Середина): Помаранчевий неоновий лазер (вимагає присідання або стрибка)
+      const w = 68 * s;
+      const h = 14 * s;
+
+      // Вертикальні стійки лазера від підлоги
+      ctx.strokeStyle = "rgba(249, 115, 22, 0.4)";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.beginPath();
+      ctx.moveTo(x - w / 2, p.y);
+      ctx.lineTo(x - w / 2, y);
+      ctx.moveTo(x + w / 2, p.y);
+      ctx.lineTo(x + w / 2, y);
+      ctx.stroke();
+
+      ctx.fillStyle = "#f97316";
+      ctx.strokeStyle = "#c2410c";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.roundRect(x - w / 2, y - h / 2, w, h, 3 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // Світіння по центру лазера
+      ctx.fillStyle = "#ffedd5";
+      ctx.fillRect(x - w / 3, y - 2 * s, (2 * w) / 3, 4 * s);
+
+      ctx.fillStyle = "#ffffff";
+      ctx.font = `bold ${Math.max(7, Math.round(8 * s))}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("MID [1]", x, y + 3 * s);
+    } else if (heightType === "High") {
+      // 2 (Верх): Масивна фіолетова балка зі стелі (забороняє стрибати)
+      const w = 74 * s;
+      const h = 24 * s;
+
+      // Тінь балки на підлозі цієї секції тунелю
+      ctx.fillStyle = "rgba(124, 58, 237, 0.25)";
+      ctx.beginPath();
+      ctx.ellipse(x, p.y - 2, (w / 2) * 0.9, 6 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Вертикальні лазерні троси-проекції від балки вниз до підлоги
+      ctx.strokeStyle = "rgba(124, 58, 237, 0.35)";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.setLineDash([4 * s, 4 * s]);
+      ctx.beginPath();
+      ctx.moveTo(x - w / 2.5, y + h / 2);
+      ctx.lineTo(x - w / 2.5, p.y);
+      ctx.moveTo(x + w / 2.5, y + h / 2);
+      ctx.lineTo(x + w / 2.5, p.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Масивна балка
+      ctx.fillStyle = "#7c3aed";
+      ctx.strokeStyle = "#5b21b6";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.roundRect(x - w / 2, y - h / 2, w, h, 4 * s);
+      ctx.fill();
+      ctx.stroke();
+
+      // Підвісні троси до стелі
+      ctx.strokeStyle = "#a78bfa";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.beginPath();
+      ctx.moveTo(x - w / 3, y - h / 2);
+      ctx.lineTo(x - w / 3, y - h / 2 - 25 * s);
+      ctx.moveTo(x + w / 3, y - h / 2);
+      ctx.lineTo(x + w / 3, y - h / 2 - 25 * s);
+      ctx.stroke();
+
+      ctx.fillStyle = "#ede9fe";
+      ctx.font = `bold ${Math.max(7, Math.round(8 * s))}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText("CEIL [2]", x, y + 3 * s);
+    }
+  } else if (item.Coin !== undefined) {
+    // ВІЗУАЛЬНА ДИФЕРЕНЦІАЦІЯ МОНЕТ ЗА ВИСОТОЮ:
+    if (heightType === "Low") {
+      // 0 (Земля): плоска монета на поверхні асфальту з тінню прямо під нею
+      ctx.fillStyle = "rgba(100, 116, 139, 0.25)";
+      ctx.beginPath();
+      ctx.ellipse(x, p.y - 2, 16 * s, 6 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = "#eab308";
+      ctx.strokeStyle = "#ca8a04";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.ellipse(x, y, 14 * s, 8 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#78350f";
+      ctx.font = `bold ${Math.round(8 * s)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`$${item.Coin}`, x, y + 3 * s);
+    } else if (heightType === "Mid") {
+      // 1 (Середина): ширяє на рівні грудей, має вертикальний пунктирний маячок до підлоги
+      ctx.strokeStyle = "rgba(234, 179, 8, 0.45)";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.setLineDash([3 * s, 3 * s]);
+      ctx.beginPath();
+      ctx.moveTo(x, p.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Тінь на підлозі під літаючою монетою
+      ctx.fillStyle = "rgba(100, 116, 139, 0.2)";
+      ctx.beginPath();
+      ctx.ellipse(x, p.y - 2, 12 * s, 5 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Кругла монета в повітрі
+      const r = Math.max(5, 13 * s);
+      ctx.fillStyle = "#facc15";
+      ctx.strokeStyle = "#ca8a04";
+      ctx.lineWidth = Math.max(1, 2 * s);
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = "#713f12";
+      ctx.font = `bold ${Math.round(10 * s)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`$${item.Coin}`, x, y + 3.5 * s);
+    } else if (heightType === "High") {
+      // 2 (Стеля): висить високо під стелею (вимагає Jump) з довгою лінією та іскорками
+      ctx.strokeStyle = "rgba(124, 58, 237, 0.45)";
+      ctx.lineWidth = Math.max(1, 1.5 * s);
+      ctx.setLineDash([4 * s, 4 * s]);
+      ctx.beginPath();
+      ctx.moveTo(x, p.y);
+      ctx.lineTo(x, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      ctx.fillStyle = "rgba(100, 116, 139, 0.15)";
+      ctx.beginPath();
+      ctx.ellipse(x, p.y - 2, 9 * s, 3.5 * s, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      const r = Math.max(5, 14 * s);
+      ctx.fillStyle = "#fbbf24";
+      ctx.strokeStyle = "#b45309";
+      ctx.lineWidth = Math.max(1, 2.5 * s);
+      ctx.beginPath();
+      ctx.arc(x, y, r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      // Крильця висоти
+      ctx.fillStyle = "#f59e0b";
+      ctx.fillRect(x - r - 5 * s, y - 2 * s, 4 * s, 4 * s);
+      ctx.fillRect(x + r + 1 * s, y - 2 * s, 4 * s, 4 * s);
+
+      ctx.fillStyle = "#78350f";
+      ctx.font = `bold ${Math.round(10 * s)}px sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(`$${item.Coin}`, x, y + 3.5 * s);
+    }
+  }
+}
+
+function drawHero(x, baseY, stance, alive) {
+  let heroY = baseY - 35;
+  let heroHeight = 62;
+  let heroWidth = 32;
+
+  if (stance === "Jumping") {
+    heroY = baseY - 115;
+    ctx.fillStyle = "rgba(100, 116, 139, 0.28)";
+    ctx.beginPath();
+    ctx.ellipse(x, baseY - 5, 26, 9, 0, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (stance === "Ducking") {
+    // Яскраво виражене ковзання/присідання: герой плаский і витягнутий вздовж землі
+    heroY = baseY - 14;
+    heroHeight = 22;
+    heroWidth = 56;
+
+    // Сліди ковзання
+    ctx.fillStyle = "rgba(203, 213, 225, 0.6)";
+    ctx.fillRect(x - 38, baseY - 5, 16, 3);
+  }
+
+  ctx.fillStyle = alive ? "#4f46e5" : "#94a3b8";
+  ctx.strokeStyle = alive ? "#3730a3" : "#64748b";
+  ctx.lineWidth = 2.5;
+
+  ctx.beginPath();
+  ctx.roundRect(x - heroWidth / 2, heroY - heroHeight / 2, heroWidth, heroHeight, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.arc(x, heroY - (stance === "Ducking" ? 4 : 14), 5.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = alive ? "#1e293b" : "#e11d48";
+  ctx.font = "bold 11px sans-serif";
+  ctx.textAlign = "center";
+  ctx.fillText(alive ? `@${stance}` : "💥 CRASH", x, heroY - heroHeight / 2 - 8);
+}
+
+function play() {
+  if (!runData || isPlaying) return;
+  isPlaying = true;
+  btnPlayPause.textContent = "⏸ Пауза";
+  btnPlayPause.classList.remove("btn-primary");
+
+  const intervalMs = Math.max(30, Math.floor(300 / playbackSpeed));
+  playInterval = setInterval(() => {
+    animOffset = (animOffset + 0.2) % 1.0;
+    if (currentTickIdx < runData.ticks.length - 1) {
+      renderTick(currentTickIdx + 1);
+    } else {
+      pause();
+    }
+  }, intervalMs);
+}
+
+function pause() {
+  isPlaying = false;
+  clearInterval(playInterval);
+  btnPlayPause.textContent = "▶ Старт";
+  btnPlayPause.classList.add("btn-primary");
+}
+
+btnPlayPause.addEventListener("click", () => {
+  if (!runData) {
+    fileInput.click();
+    return;
+  }
+  if (isPlaying) pause();
+  else {
+    if (currentTickIdx >= runData.ticks.length - 1) currentTickIdx = 0;
+    play();
+  }
+});
+
+btnPrev.addEventListener("click", () => {
+  pause();
+  renderTick(currentTickIdx - 1);
+});
+
+btnNext.addEventListener("click", () => {
+  pause();
+  renderTick(currentTickIdx + 1);
+});
+
+btnReset.addEventListener("click", () => {
+  pause();
+  renderTick(0);
+});
+
+timeline.addEventListener("input", (e) => {
+  pause();
+  renderTick(parseInt(e.target.value, 10));
+});
+
+speedSelect.addEventListener("change", (e) => {
+  playbackSpeed = parseFloat(e.target.value);
+  if (isPlaying) {
+    pause();
+    play();
+  }
+});
+
+fileInput.addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+
+  const reader = new FileReader();
+  reader.onload = (event) => {
+    try {
+      const parsed = JSON.parse(event.target.result);
+      if (parsed.ticks && Array.isArray(parsed.ticks)) {
+        initRun(parsed, file.name);
+      } else {
+        alert("Помилка: Некоректний формат файлу (відсутній масив 'ticks')");
+      }
+    } catch (err) {
+      alert("Не вдалося розпарсити JSON: " + err.message);
+    }
+  };
+  reader.readAsText(file);
+});
+
+window.addEventListener("dragover", (e) => e.preventDefault());
+window.addEventListener("drop", (e) => {
+  e.preventDefault();
+  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+    const file = e.dataTransfer.files[0];
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const parsed = JSON.parse(event.target.result);
+        if (parsed.ticks && Array.isArray(parsed.ticks)) {
+          initRun(parsed, file.name);
+        }
+      } catch (err) {
+        alert("Помилка: " + err.message);
+      }
+    };
+    reader.readAsText(file);
+  }
+});
+
+// Малюємо чистий стартовий екран
+drawScene(0);
+</script>
+
+</body>
+</html>

@@ -18,11 +18,14 @@
 
 ### Самостійна робота
 - [n00. Налаштування середовища та Git](n00_env_and_git.md)
+- [n01. Наскрізний проєкт «Cyber Tunnel Runner»](n01_cyber_tunnel_runner.md)
 
 ### Практикуми та Лабораторні
 - [p00. Практика 00: Магія паралелізму без болю](p00_parallelism.md)
 - [p01. Практика 01: Шаблони Scala (довідник)](p01_scala_templates.md)
 - [p02. Практика 02: Банка віляє донатами (java-ish Scala)](p02_javish_donation_jar.md)
+- [p04. Практика 04: Медичний консиліум (MISD Pipeline на Cleveland Heart Disease)](p04_heart_disease_triage.md)
+- [p05. Практика 05: Анатомія рушія та ботів (Розбір Engine у Cyber Tunnel Runner)](p05_engine_architecture.md)
 
 ---
 **Правила гри:**
