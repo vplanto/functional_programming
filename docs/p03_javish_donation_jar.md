@@ -1,4 +1,4 @@
-# Практика 02: Банка віляє донатами (java-ish Scala)
+# Практика 03: Банка віляє донатами (java-ish Scala)
 
 🔗 **Код до цієї практики:** [02_javish](https://github.com/vplanto/functional_programming/tree/main/02_javish)
 

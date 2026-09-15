@@ -162,7 +162,7 @@ val safeLines: Try[List[String]] = Using(Source.fromFile("data.csv")) { source =
 #### Чому це краще за класичний Java `try-finally`:
 * **Повна підтримка Java-interop:** Працює з будь-яким класом, що реалізує інтерфейс `java.lang.AutoCloseable` (`InputStream`, `Connection`, `Socket`, `Source`).
 * **Коректне придушення винятків (Suppressed Exceptions):** Якщо тіло обчислення впало з помилкою, а потім метод `.close()` теж кинув виняток, `Using` не затре первинну бізнес-помилку, а додасть виняток закриття у список придушених (`suppressed`).
-* **Використання у курсі:** Саме за допомогою `Using.resource(Source.fromFile(path))` ми безпечно завантажуємо медичний датасет у [Практиці 04: Main.scala](p04_heart_disease_triage.md), виключаючи витік пам'яті та дескрипторів.
+* **Використання у курсі:** Саме за допомогою `Using.resource(Source.fromFile(path))` ми безпечно завантажуємо медичний датасет у [Практиці 05: Main.scala](p05_heart_disease_triage.md), виключаючи витік пам'яті та дескрипторів.
 
 ---
 

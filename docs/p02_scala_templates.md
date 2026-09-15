@@ -1,8 +1,8 @@
-# Практика 01: Шаблони Scala (довідник)
+# Шаблони Scala (довідник)
 
 > **Декларація курсу.** Академічна доброчесність та авторство матеріалів — у [DISCLAIMER.md](DISCLAIMER.md).
 
-Короткий **текстовий довідник шаблонів**: куди подивитись, коли в [p00](p00_parallelism.md) чи [p02](p02_javish_donation_jar.md) зустрічається незнайомий синтаксис. Окремого проєкту для запуску немає — лише шпаргалка. Повна теорія — на лекціях 2–4.
+Короткий **текстовий довідник шаблонів**: куди подивитись, коли в [p01](p01_parallelism.md) чи [p03](p03_javish_donation_jar.md) зустрічається незнайомий синтаксис. Окремого проєкту для запуску немає — лише шпаргалка. Повна теорія — на лекціях 2–4.
 
 ---
 
@@ -295,7 +295,7 @@ val range = (1 to 100).toVector // 1.to(100) — infix
 | `filter(p)` | залишити ті, що проходять умову |
 | `sum` | згорнути числа в суму |
 
-У [p00](p00_parallelism.md) той самий конвеєр + `.par` для паралелізму.
+У [p01](p01_parallelism.md) той самий конвеєр + `.par` для паралелізму.
 
 ---
 
@@ -338,7 +338,7 @@ def pure(x: Int): Int = x * 2          // повертає результат о
 def noisy(x: Int): Unit = println(x)  // Unit ≈ void; зазвичай side effect
 ```
 
-Чисті функції повертають **дані**, не `Unit`. Логування й `println` — на краю програми ([p02](p02_javish_donation_jar.md), `DonationApp`).
+Чисті функції повертають **дані**, не `Unit`. Логування й `println` — на краю програми ([p03](p03_javish_donation_jar.md), `DonationApp`).
 
 ---
 
@@ -385,7 +385,7 @@ val (errors, numbers) = rawItems.partitionMap(parseNumber)
 ```
 
 > **Railway-Oriented Programming (ROP):** `Either` — це рейки. Поки все добре, потяг їде зеленою колією (`Right`). Як тільки стається помилка, стрілка перемикає потік на червону колію (`Left`).
-> Детальна теорія — у [Лекції 03](03_railway_oriented_programming.md) та практиках [p03](p03_transaction_pipeline.md) / [p04](p04_heart_disease_triage.md).
+> Детальна теорія — у [Лекції 03](03_railway_oriented_programming.md) та практиках [p04](p04_transaction_pipeline.md) / [p05](p05_heart_disease_triage.md).
 
 ---
 
@@ -393,8 +393,8 @@ val (errors, numbers) = rawItems.partitionMap(parseNumber)
 
 | Потреба | Куди |
 | ------- | ---- |
-| Паралелізм, race condition | [p00](p00_parallelism.md) |
-| Java-ish vs чисте ФП, shell | [p02](p02_javish_donation_jar.md) |
-| Railway-Oriented та `partitionMap` | [p03](p03_transaction_pipeline.md), [Лекція 03](03_railway_oriented_programming.md) |
+| Паралелізм, race condition | [p01](p01_parallelism.md) |
+| Java-ish vs чисте ФП, shell | [p03](p03_javish_donation_jar.md) |
+| Railway-Oriented та `partitionMap` | [p04](p04_transaction_pipeline.md), [Лекція 03](03_railway_oriented_programming.md) |
 | Immutability, structural sharing | [Лекція 01](01_immutability_and_state.md) |
 | Офіційний тур по Scala | [Scala Docs](https://docs.scala-lang.org/tour/tour-of-scala.html) |

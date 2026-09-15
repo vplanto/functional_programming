@@ -183,7 +183,7 @@ def sum(list: MyList[Int]): Int =
 
 Саме на цій ідеології ми будували весь наш код:
 
-### А. Тріаж у [04_heart_triage (Практика 04)](p04_heart_disease_triage.md):
+### А. Тріаж у [04_heart_triage (Практика 05)](p05_heart_disease_triage.md):
 Вердикт кардіологічного консиліуму змодельований як чіткий ADT:
 
 ```scala
@@ -195,7 +195,7 @@ enum TriageVerdict:
 ```
 Неможливо випадково відправити пацієнта додому з прапорцем `highVotes = 3` — типи розділені на рівні компілятора!
 
-### Б. Ігровий світ у [23_runner (Практика 05)](p05_engine_architecture.md):
+### Б. Ігровий світ у [23_runner (Практика 06)](p06_engine_architecture.md):
 Кожна перешкода в тунелі — це замкнений Sum Type:
 
 ```scala

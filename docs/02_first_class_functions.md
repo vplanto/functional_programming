@@ -77,7 +77,7 @@ isAdult(20) // true
 ```
 
 ### 2. Функція в колекції
-Ми можемо створити список алгоритмів і застосовувати їх динамічно (саме так ми будували медичний консиліум у [Практиці 04](p04_heart_disease_triage.md)):
+Ми можемо створити список алгоритмів і застосовувати їх динамічно (саме так ми будували медичний консиліум у [Практиці 05](p05_heart_disease_triage.md)):
 
 ```scala
 // Список незалежних функцій-діагностів:
@@ -182,7 +182,7 @@ val cleanProfile: Option[UserProfile] =
 `SELECT donor, SUM(amount) FROM donations GROUP BY donor ORDER BY sum DESC LIMIT n`.
 
 У класичному ООП/Java без Streams це вимагало б ручного циклу з `Map<String, Double>` та постійних перевірок `map.containsKey` чи `map.put(..., map.get(...) + amount)`.  
-У чистому функціональному підході ми збираємо **декларативний конвеєр трансформації форми даних** (саме так реалізовано аналітику у [Практиці 02: Банка донатів](p02_javish_donation_jar.md)):
+У чистому функціональному підході ми збираємо **декларативний конвеєр трансформації форми даних** (саме так реалізовано аналітику у [Практиці 03: Банка донатів](p03_javish_donation_jar.md)):
 
 ```scala
 case class Donation(donor: String, amount: Double)
@@ -301,7 +301,7 @@ def myFilter[A](list: List[A])(predicate: A => Boolean): List[A] =
 [Подія 3: Списання  -100  ] ──┘
 ```
 
-Саме за цим принципом працює ігровий рушій нашого наскрізного проєкту [23_runner (Практика 05)](p05_engine_architecture.md):
+Саме за цим принципом працює ігровий рушій нашого наскрізного проєкту [23_runner (Практика 06)](p06_engine_architecture.md):
 ```scala
 // Ігровий світ на 100-му тіку — це результат згортки 100 дій ботів:
 val finalState = actionsHistory.foldLeft(initialState) { (state, action) =>

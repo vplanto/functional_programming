@@ -25,14 +25,16 @@
 ### Самостійна робота
 - [n00. Налаштування середовища та Git](n00_env_and_git.md)
 - [n01. Наскрізний проєкт «Cyber Tunnel Runner»](n01_cyber_tunnel_runner.md)
+- [n02. Програма СРС (60 годин) та рекомендовані міжнародні курси](n02_recommended_courses.md)
 
 ### Практикуми та Лабораторні
-- [p00. Практика 00: Магія паралелізму без болю](p00_parallelism.md)
-- [p01. Практика 01: Шаблони Scala (довідник)](p01_scala_templates.md)
-- [p02. Практика 02: Банка віляє донатами (java-ish Scala)](p02_javish_donation_jar.md)
-- [p03. Практика 03: Залізничний платіжний конвеєр (Railway-Oriented Pipeline)](p03_transaction_pipeline.md)
-- [p04. Практика 04: Медичний консиліум (MISD Pipeline на Cleveland Heart Disease)](p04_heart_disease_triage.md)
-- [p05. Практика 05: Анатомія рушія та ботів (Розбір Engine у Cyber Tunnel Runner)](p05_engine_architecture.md)
+- [p00. Практика 00: Сократівський тьютор (робота з ШІ)](p00_socratic_tutor.md)
+- [p01. Практика 01: Магія паралелізму без болю](p01_parallelism.md)
+- [p02. Шаблони Scala (довідник)](p02_scala_templates.md)
+- [p03. Практика 03: Банка віляє донатами (java-ish Scala)](p03_javish_donation_jar.md)
+- [p04. Практика 04: Залізничний платіжний конвеєр (Railway-Oriented Pipeline)](p04_transaction_pipeline.md)
+- [p05. Практика 05: Медичний консиліум (MISD Pipeline на Cleveland Heart Disease)](p05_heart_disease_triage.md)
+- [p06. Практика 06: Анатомія рушія та ботів (Розбір Engine у Cyber Tunnel Runner)](p06_engine_architecture.md)
 
 ---
 **Правила гри:**
