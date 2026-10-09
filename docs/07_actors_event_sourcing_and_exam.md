@@ -7,19 +7,19 @@
 
 ## Питання для розминки
 
-<details>
+<details markdown="1">
 <summary>1. Чому акторам у моделі конкурентності взагалі не потрібні блокування (Locks / Mutex / synchronized)?</summary>
 
 Тому що кожен актор має свою особисту поштову скриньку (Mailbox). Повідомлення з черги вичитуються і обробляються актором **суворо послідовно в один потік**. Внутрішній стан актора ізольований: жоден зовнішній потік не може доторкнутися до його пам'яті напряму, що математично унеможливлює стан гонитви (Race Condition).
 </details>
 
-<details>
+<details markdown="1">
 <summary>2. Що означає знаменитий принцип відмовостійкості систем на акторах: «Let It Crash» (Хай впаде)?</summary>
 
 Замість того, щоб засмічувати кожен рядок бізнес-коду параноїдальними `try/catch` з непередбачуваним станом після збою, розробник дозволяє актору впасти. Актор-батько (Супервізор) спостерігає за падінням і автоматично застосовує чисту стратегію зцілення (наприклад, перезапускає актора з чистим початковим станом).
 </details>
 
-<details>
+<details markdown="1">
 <summary>3. У чому різниця між традиційним збереженням стану в реляційній базі та парадигмою Event Sourcing?</summary>
 
 Традиційна БД виконує `UPDATE accounts SET balance = 500`, безповоротно стираючи історію того, як цей баланс виник. Парадигма **Event Sourcing** нічого не перезаписує — вона лише додає незмінні факти в лог (`Поповнення +1000`, `Списання -300`, `Комісія -200`). Поточний стан рахунку — це звичайна функціональна згортка (**`foldLeft`**) над цим логом подій.
@@ -155,7 +155,7 @@ object CounterActor:
 
 ## 4. Архітектура рушія `23_runner`: Патерн «Functional Core, Imperative Shell» та детермінований Event Log
 
-Коли ви відкриваєте вихідний код [Engine.scala](file:///home/pvv/projects/onu/functional_programming/23_runner/src/main/scala/runner/Engine.scala), ви бачите не акторів і не реактивні стріми, а покроковий цикл симуляції:
+Коли ви відкриваєте вихідний код [Engine.scala](https://github.com/vplanto/functional_programming/blob/main/23_runner/src/main/scala/runner/Engine.scala), ви бачите не акторів і не реактивні стріми, а покроковий цикл симуляції:
 ```scala
 while hero.alive && tick < maxTicks && !reachedStopSpeed do
   ...
@@ -185,7 +185,7 @@ while hero.alive && tick < maxTicks && !reachedStopSpeed do
   TickRecord(tick, heroBefore, action, heroAfter, responseTimeNanos, slice)
   ```
 * Забіг зберігається як список фактів `history: List[TickRecord]`.
-* Завдяки цьому ми експортуємо забіг у компактний JSON ([JsonExporter.scala](file:///home/pvv/projects/onu/functional_programming/23_runner/src/main/scala/runner/JsonExporter.scala)) і відтворюємо візуальний реплей у браузері (`docs/viewer/index.html`) без збереження важких дампів пам'яті.
+* Завдяки цьому ми експортуємо забіг у компактний JSON ([JsonExporter.scala](https://github.com/vplanto/functional_programming/blob/main/23_runner/src/main/scala/runner/JsonExporter.scala)) і відтворюємо візуальний реплей у браузері (`docs/viewer/index.html`) без збереження важких дампів пам'яті.
 
 ---
 
@@ -233,19 +233,19 @@ while hero.alive && tick < maxTicks && !reachedStopSpeed do
 
 ## Контрольні питання для самоперевірки
 
-<details>
+<details markdown="1">
 <summary>1. Чому заміна мутабельного var на рекурсивний перехід CounterActor(count + 1) у моделі акторів є абсолютно безпечною для пам'яті стеку?</summary>
 
 Тому що повернення нової поведінки `Behavior` в Akka/Pekko — це не класична рекурсія глибини викликів стеку (де можна зловити StackOverflowError). Це повернення звичайного функціонального об'єкта, який рушій акторів реєструє для обробки наступного листа в циклі планувальника (Event Loop).
 </details>
 
-<details>
+<details markdown="1">
 <summary>2. Чому в розподілених системах архітектура Event Sourcing ідеально підходить для мікросервісів?</summary>
 
 Події — це доконані факти минулого (`OrderCreated`, `PaymentReceived`), які ніколи не змінюються. Їх можна безпечно реплікувати через брокери (Kafka) до будь-якої кількості незалежних сервісів без блокувань центральної бази даних.
 </details>
 
-<details>
+<details markdown="1">
 <summary>3. Яке головне запитання ставить собі розробник перед тим, як написати функцію у чистому ФП?</summary>
 
 «Чи є ця функція детермінованою (завжди однаковий вихід на однаковий вхід) і чи не має вона прихованих побічних ефектів (Side Effects), які змінюють світ за межами її аргументів?». Якщо так — функція на 100% потокобезпечна, масштабована та легко тестується.
