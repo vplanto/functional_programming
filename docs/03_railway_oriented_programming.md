@@ -396,7 +396,7 @@ flowchart LR
     Calc -->|Успіх| R_out
     Calc -->|Помилка| L_out
 
-    L_in -->|Транзит (пропуск)| L_out
+    L_in -->|"Транзит (пропуск)"| L_out
 
     classDef success fill:#d4edda,stroke:#28a745,stroke-width:2px;
     classDef failure fill:#f8d7da,stroke:#dc3545,stroke-width:2px;
