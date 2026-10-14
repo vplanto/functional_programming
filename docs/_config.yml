@@ -1,0 +1,23 @@
+title: "Прикладне функціональне програмування"
+description: "Functional and reactive systems — Scala course"
+lang: uk
+markdown: kramdown
+highlighter: rouge
+baseurl: "/functional_programming"
+url: "https://vplanto.github.io"
+
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+  - scope:
+      path: ""
+      type: "posts"
+    values:
+      layout: "default"
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
