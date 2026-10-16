@@ -252,12 +252,19 @@ val standardPipeline: Transformer =
 #### Чому батч не повинен «падати» від одного битого рядка?
 У реальних фінтех-системах щоночі надходять клірингові виписки на 500 000 операцій. Якщо на 499 999-му рядку трапився битий email, система не має права перервати весь імпорт і заблокувати пів мільйона платежів клієнтів!
 
-Метод `partitionMap` розділяє результат за один прохід:
+Метод `partitionMap` у поєднанні з `zipWithIndex` вирішує цю проблему елегантно та ефективно:
 
 ```scala
-// Розділяє список Either на два окремі списки за ОДИН прохід:
-val (parseErrors, parsedTransactions) = Parser.parseBatch(rawCsvData)
+// Реалізація в Parser.scala:
+def parseBatch(lines: List[String]): (List[TxError], List[Transaction]) =
+  lines.zipWithIndex.partitionMap { case (line, idx) =>
+    parseLine(idx + 1, line) // нумерація рядків з 1 для зручності аудиту
+  }
 ```
+
+> 💡 **Що робить `zipWithIndex`:**  
+> Метод «зчіплює» (як застібка-блискавка *zipper*) кожен елемент списку з його індексом: `List("a", "b").zipWithIndex` ➔ `List(("a", 0), ("b", 1))`.  
+> Це чиста заміна імперативному лічильнику `for (int i = 0...)`: жодних мутабельних змінних `var` та нульовий ризик виходу за межі масиву (`IndexOutOfBoundsException`).
 
 #### Чому саме `partitionMap`, а не інші способи:
 * **Ефективність $O(N)$ в один прохід:** Традиційний підхід `list.filter(_.isLeft)` та `list.filter(_.isRight)` змушує JVM проходити по пам'яті двічі й створювати проміжні колекції. `partitionMap` робить це за один прохід і одразу витягує чисті значення з контейнерів (`Left(err) => err`, `Right(tx) => tx`).
