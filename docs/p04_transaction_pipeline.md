@@ -219,6 +219,25 @@ object Email:
 | **2. Конструктор з винятком (`require`)** | `case class Email(v: String) { require(v.contains("@")) }` | Конструктор кидає `IllegalArgumentException` у рантаймі. Сигнатура методу створення бреше: вона не попереджає про збій. Будь-який виклик треба огортати в `try-catch`, що руйнує чистоту і спалює CPU на створення стек-трейсів. |
 | **3. Розумний конструктор (Smart Constructor)** | `Email.fromString(raw): Either[Error, Email]` | **Parse, don't validate!** Якщо у вас у руках є об'єкт типу `Email`, ви на 100% упевнені, що він валідний. Жоден метод у бізнес-логіці чи базі даних більше **ніколи не перевіряє email повторно**. Валідність гарантована самою системою типів. |
 
+> [!NOTE]
+> **Парадокс для уважних: Чому в коді так багато `if`, якщо раніше вчили їх уникати?**  
+> 
+> У [Лекції 03](03_railway_oriented_programming.md) ми оголосили війну `if (x == null)` та спагеті-розгалуженням, замінивши їх на `Either` та `for-comprehension`. Але чому в [domain.scala](https://github.com/vplanto/functional_programming/blob/main/03_transaction_pipeline/src/main/scala/pipeline/domain.scala) та [Rules.scala](https://github.com/vplanto/functional_programming/blob/main/03_transaction_pipeline/src/main/scala/pipeline/Rules.scala) ми знову бачимо `if`?
+> 
+> **Чи це порушення функціонального стилю? Ні, і ось три фундаментальні причини:**
+> 
+> 1. **`if` як вираз (Expression), а не інструкція (Statement):**  
+>    У Scala конструкція `if-else` є виразом, що **завжди повертає значення** в обох гілках (аналог тернарного оператора `?:` у Java/C++). Ми не використовуємо `if` без `else` і не робимо всередині побічних ефектів (`var`, `println`, `throw`). Наші `if` абсолютно чисті: вони обчислюють `Either` або новий стан об'єкта.
+> 
+> 2. **`if` живе виключно на межі системи (System Boundary / Ingress):**  
+>    Коли ззовні надходять сирі нетипізовані дані (рядки з CSV чи JSON), процесор фізично мусить перевірити базові предикати (`trimmed.contains("@")`, `parts.length < 5`). Смарт-конструктор ізолює ці перевірки на самому вході («фейсконтроль»). Завдяки цьому **всередині бізнес-домену жодного `if` більше немає**.
+> 
+> 3. **Локальні предикати vs Архітектурний клей:**  
+>    ФП забороняє використовувати `if-else` для **керування конвеєром обчислень** (так звана «піраміда смерті» з вкладених умов, яку ми розбираємо в наступному пункті В). Для зв'язування кроків слугує залізниця (`for-comprehension` у [Parser.scala](https://github.com/vplanto/functional_programming/blob/main/03_transaction_pipeline/src/main/scala/pipeline/Parser.scala) та `andThen` у [Rules.scala](https://github.com/vplanto/functional_programming/blob/main/03_transaction_pipeline/src/main/scala/pipeline/Rules.scala)).
+> 
+> 💡 *Підсумок:* Функціональне програмування бореться не з ключовим словом `if`, а з **побічними ефектами, мутабельністю та вкладеними розгалуженнями потоку керування**. Простий чистий вираз `if-else` для перевірки бізнес-умови — це абсолютно законний інструмент.  
+> *(Для перфекціоністів: перевірку рядка можна записати й через `Either.cond(trimmed.contains("@"), Right(...), Left(...))`, але для кількох послідовних умов звичайний `if-else` часто набагато легше читається).*
+
 ---
 
 ### В. Залізничний парсер у `for`-comprehension (`Parser.scala`)
