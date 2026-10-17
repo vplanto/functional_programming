@@ -183,10 +183,12 @@ enum TxError:
 
 ```scala
 // 1. Конструктор private: неможливо створити об'єкт в обхід валідації
-final case class Email private (value: String)
+final case class Email private (value: String):
+  // 2. Чистий вивід у логах та звітах замість технічного `Email(alice@onu.edu.ua)`
+  override def toString: String = value
 
 object Email:
-  // 2. Єдиний шлях створення: через повернення Either
+  // 3. Єдиний санкціонований шлях створення: через повернення Either
   def fromString(raw: String): Either[TxError.InvalidEmail, Email] =
     val trimmed = raw.trim
     if !trimmed.contains("@") then
@@ -200,6 +202,14 @@ object Email:
       else
         Right(new Email(trimmed.toLowerCase))
 ```
+
+> 💡 **Часте запитання з Java: Чому ми не створили окремий файл `Email.scala`?**  
+> У Java діє примус компілятора: *1 публічний клас = 1 однойменний файл*. Через це виникає **«файлова інфляція» (File Proliferation)** — розсип мікрофайлів по 10–15 рядків.  
+> 
+> У Scala організація коду спирається на **семантичну цілісність (High Cohesion)**:  
+> - **Уся доменна модель на одному екрані (Single-Screen Mental Model):** `TxError`, `Email`, `Currency`, `Money` та `Transaction` разом займають ~80 рядків у `domain.scala`. За 15 секунд архітектор бачить усе неподільне ядро бізнес-моделі без клацання по 5 вкладках IDE.  
+> - **Спільна приватність:** `final case class Email private (...)` та `object Email` живуть поруч. Об'єкт-компаньйон має законний доступ до приватного конструктора `new Email(...)`.  
+> - **Емпіричне правило (Rule of Thumb):** в окремі файли (`Parser.scala`, `Rules.scala`, `Main.scala`) виноситься лише складна алгоритмічна логіка, але не атомарні описи типів даних.
 
 #### Чому ми робимо так, а не інакше? Порівняння альтернатив
 
