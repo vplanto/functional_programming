@@ -31,8 +31,8 @@ hub: true
 - [n00. Налаштування середовища та Git](n00_env_and_git.md)
 - [n01. Наскрізний проєкт «Cyber Tunnel Runner»](n01_cyber_tunnel_runner.md)
 - [n02. Програма СРС (60 годин) та рекомендовані міжнародні курси](n02_recommended_courses.md)
-- [Варіанти завдань для моделювання стану](n03_state_modeling_tasks.md)
-- [Журнали подій (CSV) та імпорт через Railway-Oriented Programming](n04_state_event_logs.md)
+- [n03. Варіанти завдань для моделювання стану](n03_state_modeling_tasks.md)
+- [n04. Журнали подій (CSV) та імпорт через Railway-Oriented Programming](n04_state_event_logs.md)
 
 ### Практикуми та Лабораторні
 - [p00. Практика 00: Сократівський тьютор (робота з ШІ)](p00_socratic_tutor.md)
@@ -43,5 +43,18 @@ hub: true
 - [p05. Практика 05: Медичний консиліум (MISD Pipeline на Cleveland Heart Disease)](p05_heart_disease_triage.md)
 - [p06. Практика 06: Анатомія рушія та ботів (Розбір Engine у Cyber Tunnel Runner)](p06_engine_architecture.md)
 
+### Модулі репозиторію коду
+- [`00_hello_scala`](https://github.com/vplanto/functional_programming/tree/main/00_hello_scala) — стартовий шаблон і налаштування середовища ([n00](n00_env_and_git.md)).
+- [`01_parallelism`](https://github.com/vplanto/functional_programming/tree/main/01_parallelism) — паралельні колекції та бенчмарки ([p01](p01_parallelism.md)).
+- [`02_javish`](https://github.com/vplanto/functional_programming/tree/main/02_javish) — банка донатів: перехід від Java-стилю до ідіоматичної Scala ([p03](p03_javish_donation_jar.md)).
+- [`03_transaction_pipeline`](https://github.com/vplanto/functional_programming/tree/main/03_transaction_pipeline) — залізничний платіжний конвеєр на `Either` ([p04](p04_transaction_pipeline.md)).
+- [`04_heart_triage`](https://github.com/vplanto/functional_programming/tree/main/04_heart_triage) — кардіологічний MISD-консиліум ([p05](p05_heart_disease_triage.md)).
+- [`23_runner`](https://github.com/vplanto/functional_programming/tree/main/23_runner) — наскрізний рушій «Cyber Tunnel Runner» ([n01](n01_cyber_tunnel_runner.md), [p06](p06_engine_architecture.md), [Лекція 07](07_actors_event_sourcing_and_exam.md)).
+- [`n04_state_event_logs`](https://github.com/vplanto/functional_programming/tree/main/n04_state_event_logs) — контракти CSV, генератор журналів подій та валідація ([n04](n04_state_event_logs.md), [n03](n03_state_modeling_tasks.md)).
+
 ---
+
 **Правила гри:**
+1. **Лекції — це не начитка синтаксису**, а обговорення архітектури та інженерних компромісів.
+2. **Практика — це основа:** подолання звички до `var` і мутацій на користь чистоти.
+3. **Головне питання — «Як це працює?»:** згенерувати код через ШІ дозволено, але нездатність пояснити роботу під капотом — це провал (деталі у [p00. Сократівський тьютор](p00_socratic_tutor.md)).

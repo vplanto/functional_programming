@@ -140,20 +140,29 @@ point match
 
 ```scala
 enum PaymentMethod:
-  case Cash                                    // простий синглтон без полів
-  case CreditCard(number: String, cvv: String) // варіант із даними (Product Type)
+  case Cash                                    // простий синглтон без полів (case object)
+  case CreditCard(number: String, cvv: String) // варіант із даними (Product Type / case class)
   case ApplePay(token: String)
 ```
 
-<details markdown="1">
-<summary>Що під капотом? (Цукор над класичним <code>sealed trait</code>)</summary>
+> 💡 **Що робить `Cash` синглтоном?**
+> * **Синтаксис без дужок `()` ➔ `case object`:** якщо варіант не має полів, компілятор Scala 3 створює для нього не клас, а **синглтон-об'єкт**.
+> * **Гарантія JVM:** створюється рівно один екземпляр у пам'яті (статичне поле), ініціалізований завантажувачем класів (ClassLoader).
+> * **Zero-GC та продуктивність:** скільки б мільйонів транзакцій готівкою не оброблялося, `PaymentMethod.Cash` завжди посилається на один і той самий об'єкт. Порівняння відбувається миттєво за посиланням, а збирач сміття (GC) не створює оверхеду.
+> * **Контраст:** якщо варіант містить параметри в дужках `(...)` (як `CreditCard`), компілятор генерує повноцінний `case class`, який виділяє пам'ять під новий об'єкт для кожного виклику.
 
-`enum` у Scala 3 — це чистий **синтаксичний цукор**. Компілятор автоматично розгортає його в класичний патерн Scala 2, позбавляючи нас рутинного писання `extends`:
+<details markdown="1">
+<summary>Що під капотом? (Цукор над класичним <code>sealed trait</code> та <code>case object</code>)</summary>
+
+`enum` у Scala 3 — це чистий **синтаксичний цукор**. Компілятор автоматично розгортає його в класичний патерн:
 
 ```scala
 sealed trait PaymentMethod
 object PaymentMethod:
+  // 1. Варіант без полів -> синглтон:
   case object Cash extends PaymentMethod
+
+  // 2. Варіанти з полями -> класи з новими інстансами під кожен виклик:
   case class CreditCard(number: String, cvv: String) extends PaymentMethod
   case class ApplePay(token: String) extends PaymentMethod
 ```
