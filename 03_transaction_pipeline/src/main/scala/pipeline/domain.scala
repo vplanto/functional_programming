@@ -13,6 +13,11 @@ enum TxError:
   case UnsupportedCurrency(raw: String)
   case FraudLimitExceeded(amount: BigDecimal, limit: BigDecimal)
 
+  // Чому метод описаний тут у тілі enum, а не в кожному окремому case чи в companion object?
+  // 1. Проти окремих case (ООП-поліморфізм): гілки ADT залишаються чистими описами даних.
+  //    Усі шаблони форматування зібрані в одному місці з контролем вичерпності компілятором (exhaustiveness).
+  // 2. Проти companion object: зберігаємо ергономічний точковий синтаксис виклику екземпляра
+  //    `err.formatMessage` (як у Main.scala) замість громіздкого `TxError.formatMessage(err)`.
   def formatMessage: String = this match
     case MalformedRow(r, raw, exp, act) =>
       s"[Рядок ${r}] Очікувалося ${exp} колонок, отримано ${act}. Вміст: '${raw}'"
@@ -28,6 +33,9 @@ enum TxError:
 // 2. Розумний конструктор Email (Smart Constructor)
 // Первинний конструктор приватний: створити об'єкт можна лише пройшовши валідацію
 final case class Email private (value: String):
+  // За замовчуванням case-клас повертає `Email(user@onu.edu.ua)`.
+  // Перевизначаємо `toString`, щоб у логах, звітах та інтерполяції рядків (s"To: $recipient")
+  // виводився чистий рядок ("user@onu.edu.ua") без технічного імені обгортки.
   override def toString: String = value
 
 object Email:
