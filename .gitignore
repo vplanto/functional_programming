@@ -16,6 +16,7 @@ project/project/
 
 # Temporary files
 tmp/
+<<<<<<< Updated upstream
 
 # Python virtual environment
 .venv/
@@ -23,3 +24,6 @@ tmp/
 # n04 bulk CSV (генеруються скриптом у n04_state_event_logs/scripts/)
 n04_state_event_logs/generated/*
 !n04_state_event_logs/generated/.gitkeep
+=======
+docs/transcripts/
+>>>>>>> Stashed changes
