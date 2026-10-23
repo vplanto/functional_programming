@@ -1,0 +1,14 @@
+{
+  "$id": "n04_contract.schema.json",
+  "title": "N04 event log contract",
+  "type": "object",
+  "required": ["meta", "csv", "primitiveTypes", "errorStrategies", "generationDefaults"],
+  "properties": {
+    "meta": { "type": "object" },
+    "csv": { "type": "object" },
+    "generationDefaults": { "type": "object" },
+    "primitiveTypes": { "type": "object" },
+    "errorStrategies": { "type": "object" },
+    "defaultInjectionProfile": { "type": "object" }
+  }
+}

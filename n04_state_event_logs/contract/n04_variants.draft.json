@@ -1,0 +1,1214 @@
+[
+  {
+    "id": 1,
+    "block": 1,
+    "slug": "bike_share_wallet",
+    "title": "Гаманець міського велопрокату",
+    "n03Invariant": "forbid_ride_if_insufficient_balance",
+    "events": [
+      {
+        "code": "TOPUP",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "50.00", "max": "500.00" } }
+        ]
+      },
+      {
+        "code": "RIDE",
+        "fields": [
+          { "col": "p1", "name": "duration_minutes", "type": "positive_int", "range": { "min": 3, "max": 120 } },
+          { "col": "p2", "name": "cost", "type": "money_positive", "range": { "min": "12.00", "max": "360.00" } }
+        ]
+      },
+      {
+        "code": "PROMO",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "10.00", "max": "150.00" } }
+        ]
+      },
+      {
+        "code": "COMPENSATION",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "25.00", "max": "400.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "TOPUP": 0.2, "RIDE": 0.45, "PROMO": 0.15, "COMPENSATION": 0.2 }
+  },
+  {
+    "id": 2,
+    "block": 1,
+    "slug": "cafe_loyalty_card",
+    "title": "Картка лояльності кав'ярні",
+    "n03Invariant": "forbid_redeem_exceeds_balance",
+    "events": [
+      {
+        "code": "EARN",
+        "fields": [
+          { "col": "p1", "name": "receipt_uah", "type": "money_positive", "range": { "min": "45.00", "max": "850.00" } }
+        ]
+      },
+      {
+        "code": "REDEEM",
+        "fields": [
+          { "col": "p1", "name": "points", "type": "positive_int", "range": { "min": 40, "max": 350 } }
+        ]
+      },
+      {
+        "code": "BIRTHDAY_BONUS",
+        "fields": [
+          { "col": "p1", "name": "points", "type": "positive_int", "range": { "min": 80, "max": 500 } }
+        ]
+      },
+      {
+        "code": "EXPIRE",
+        "fields": [
+          { "col": "p1", "name": "points", "type": "positive_int", "range": { "min": 15, "max": 280 } }
+        ]
+      }
+    ],
+    "eventWeights": { "EARN": 0.4, "REDEEM": 0.3, "BIRTHDAY_BONUS": 0.1, "EXPIRE": 0.2 }
+  },
+  {
+    "id": 3,
+    "block": 1,
+    "slug": "crypto_wallet_fees",
+    "title": "Криптогаманець із комісіями мережі",
+    "n03Invariant": "forbid_send_if_amount_plus_fee_exceeds_balance",
+    "events": [
+      {
+        "code": "RECEIVE",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "25.00", "max": "3500.00" } }
+        ]
+      },
+      {
+        "code": "SEND",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "10.00", "max": "1800.00" } },
+          { "col": "p2", "name": "network_fee", "type": "money_non_negative", "range": { "min": "0.35", "max": "85.00" } }
+        ]
+      },
+      {
+        "code": "STAKE_REWARD",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "0.15", "max": "120.00" } }
+        ]
+      },
+      {
+        "code": "FORK_ADJUST",
+        "fields": [
+          { "col": "p1", "name": "delta", "type": "signed_money", "range": { "min": "-250.00", "max": "250.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "RECEIVE": 0.3, "SEND": 0.35, "STAKE_REWARD": 0.2, "FORK_ADJUST": 0.15 }
+  },
+  {
+    "id": 4,
+    "block": 1,
+    "slug": "split_bill_trip",
+    "title": "Сервіс спільних витрат (Split-bill)",
+    "n03Invariant": "forbid_expense_exceeds_fund_balance",
+    "events": [
+      {
+        "code": "CONTRIBUTION",
+        "fields": [
+          { "col": "p1", "name": "member", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "300.00", "max": "5000.00" } }
+        ]
+      },
+      {
+        "code": "SHARED_EXPENSE",
+        "fields": [
+          { "col": "p1", "name": "label", "type": "short_label" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "280.00", "max": "6500.00" } }
+        ]
+      },
+      {
+        "code": "PERSONAL_EXPENSE",
+        "fields": [
+          { "col": "p1", "name": "member", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "45.00", "max": "950.00" } }
+        ]
+      },
+      {
+        "code": "CARD_CASHBACK",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "12.00", "max": "280.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "CONTRIBUTION": 0.25, "SHARED_EXPENSE": 0.35, "PERSONAL_EXPENSE": 0.25, "CARD_CASHBACK": 0.15 }
+  },
+  {
+    "id": 5,
+    "block": 1,
+    "slug": "bank_cashback_account",
+    "title": "Кешбек-рахунок онлайн-банку",
+    "n03Invariant": "forbid_withdraw_below_minimum_threshold",
+    "events": [
+      {
+        "code": "ACCRUE",
+        "fields": [
+          { "col": "p1", "name": "category", "type": "token" },
+          { "col": "p2", "name": "purchase_uah", "type": "money_positive", "range": { "min": "75.00", "max": "12500.00" } },
+          { "col": "p3", "name": "percent", "type": "percent_0_100", "range": { "min": "1.00", "max": "15.00" } }
+        ]
+      },
+      {
+        "code": "WITHDRAW",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "100.00", "max": "3000.00" } }
+        ]
+      },
+      {
+        "code": "PARTNER_BONUS",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "30.00", "max": "750.00" } }
+        ]
+      },
+      {
+        "code": "REFUND_REVERSAL",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "8.00", "max": "420.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "ACCRUE": 0.45, "WITHDRAW": 0.2, "PARTNER_BONUS": 0.1, "REFUND_REVERSAL": 0.25 },
+    "constants": { "minWithdrawUah": "100.00" }
+  },
+  {
+    "id": 6,
+    "block": 1,
+    "slug": "gift_certificate",
+    "title": "Подарунковий сертифікат маркетплейсу",
+    "n03Invariant": "forbid_payment_exceeds_balance",
+    "events": [
+      {
+        "code": "ACTIVATE",
+        "fields": [
+          { "col": "p1", "name": "nominal", "type": "money_positive", "range": { "min": "300.00", "max": "10000.00" } }
+        ]
+      },
+      {
+        "code": "PAY_ORDER",
+        "fields": [
+          { "col": "p1", "name": "order_id", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "89.00", "max": "4500.00" } }
+        ]
+      },
+      {
+        "code": "ORDER_REFUND",
+        "fields": [
+          { "col": "p1", "name": "order_id", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "50.00", "max": "3200.00" } }
+        ]
+      },
+      {
+        "code": "RECOVERY_FEE",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "25.00", "max": "200.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "ACTIVATE": 0.05, "PAY_ORDER": 0.5, "ORDER_REFUND": 0.3, "RECOVERY_FEE": 0.15 }
+  },
+  {
+    "id": 7,
+    "block": 1,
+    "slug": "foodtruck_cash_register",
+    "title": "Касова зміна фудтрака",
+    "n03Invariant": "forbid_cash_out_if_insufficient_cash",
+    "events": [
+      {
+        "code": "FLOAT_IN",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "500.00", "max": "3000.00" } }
+        ]
+      },
+      {
+        "code": "SALE",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "65.00", "max": "480.00" } },
+          { "col": "p2", "name": "channel", "type": "enum_ref", "allowed": ["CASH", "CARD"] }
+        ]
+      },
+      {
+        "code": "COLLECTION",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "300.00", "max": "4000.00" } }
+        ]
+      },
+      {
+        "code": "SUPPLY_PURCHASE",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "80.00", "max": "850.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "FLOAT_IN": 0.1, "SALE": 0.55, "COLLECTION": 0.15, "SUPPLY_PURCHASE": 0.2 }
+  },
+  {
+    "id": 8,
+    "block": 2,
+    "slug": "parcel_locker",
+    "title": "Розумний поштомат",
+    "n03Invariant": "forbid_deposit_to_occupied_or_blocked_cell",
+    "events": [
+      {
+        "code": "DEPOSIT",
+        "fields": [
+          { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } },
+          { "col": "p2", "name": "parcel_id", "type": "token" },
+          { "col": "p3", "name": "size_class", "type": "enum_ref", "allowed": ["S", "M", "L"] }
+        ]
+      },
+      {
+        "code": "PICKUP",
+        "fields": [
+          { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } },
+          { "col": "p2", "name": "parcel_id", "type": "token" }
+        ]
+      },
+      {
+        "code": "EXPIRED_REMOVAL",
+        "fields": [
+          { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } },
+          { "col": "p2", "name": "parcel_id", "type": "token" }
+        ]
+      },
+      {
+        "code": "BLOCK_CELL",
+        "fields": [
+          { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } }
+        ]
+      }
+    ],
+    "eventWeights": { "DEPOSIT": 0.4, "PICKUP": 0.35, "EXPIRED_REMOVAL": 0.15, "BLOCK_CELL": 0.1 },
+    "constants": { "cellCount": 48 }
+  },
+  {
+    "id": 9,
+    "block": 2,
+    "slug": "warehouse_pallets",
+    "title": "Складський облік палет",
+    "n03Invariant": "forbid_ship_more_than_stock",
+    "events": [
+      {
+        "code": "RECEIVE",
+        "fields": [
+          { "col": "p1", "name": "sku", "type": "token" },
+          { "col": "p2", "name": "qty", "type": "positive_int", "range": { "min": 8, "max": 120 } }
+        ]
+      },
+      {
+        "code": "SHIP",
+        "fields": [
+          { "col": "p1", "name": "sku", "type": "token" },
+          { "col": "p2", "name": "qty", "type": "positive_int", "range": { "min": 4, "max": 85 } }
+        ]
+      },
+      {
+        "code": "WRITE_OFF",
+        "fields": [
+          { "col": "p1", "name": "sku", "type": "token" },
+          { "col": "p2", "name": "qty", "type": "positive_int", "range": { "min": 1, "max": 12 } }
+        ]
+      },
+      {
+        "code": "RELABEL",
+        "fields": [
+          { "col": "p1", "name": "from_sku", "type": "token" },
+          { "col": "p2", "name": "to_sku", "type": "token" },
+          { "col": "p3", "name": "qty", "type": "positive_int", "range": { "min": 2, "max": 45 } }
+        ]
+      }
+    ],
+    "eventWeights": { "RECEIVE": 0.35, "SHIP": 0.35, "WRITE_OFF": 0.1, "RELABEL": 0.2 },
+    "constants": { "maxCapacityPallets": 1000 }
+  },
+  {
+    "id": 10,
+    "block": 2,
+    "slug": "fleet_fuel_card",
+    "title": "Баланс паливної картки автопарку",
+    "n03Invariant": "forbid_refuel_exceeds_limit",
+    "events": [
+      {
+        "code": "LIMIT_TOPUP",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "250.00", "max": "750.00" } }
+        ]
+      },
+      {
+        "code": "REFUEL",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "28.00", "max": "145.00" } },
+          { "col": "p2", "name": "fuel", "type": "enum_ref", "allowed": ["DIESEL", "PETROL", "LPG"] },
+          { "col": "p3", "name": "vehicle", "type": "token" }
+        ]
+      },
+      {
+        "code": "EMERGENCY_GRANT",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "15.00", "max": "90.00" } }
+        ]
+      },
+      { "code": "MONTH_RESET", "fields": [] }
+    ],
+    "eventWeights": { "LIMIT_TOPUP": 0.15, "REFUEL": 0.6, "EMERGENCY_GRANT": 0.1, "MONTH_RESET": 0.15 }
+  },
+  {
+    "id": 11,
+    "block": 2,
+    "slug": "cargo_elevator",
+    "title": "Вантажний ліфт",
+    "n03Invariant": "forbid_move_if_over_weight_limit",
+    "events": [
+      {
+        "code": "LOAD",
+        "fields": [
+          { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "120.00", "max": "950.00" } },
+          { "col": "p2", "name": "cargo_id", "type": "token" }
+        ]
+      },
+      {
+        "code": "UNLOAD",
+        "fields": [
+          { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "120.00", "max": "950.00" } },
+          { "col": "p2", "name": "cargo_id", "type": "token" }
+        ]
+      },
+      {
+        "code": "ATTENDANT_TOGGLE",
+        "fields": [
+          { "col": "p1", "name": "action", "type": "enum_ref", "allowed": ["BOARD", "LEAVE"] }
+        ]
+      },
+      {
+        "code": "EMERGENCY_DUMP",
+        "fields": [
+          { "col": "p1", "name": "kg_removed", "type": "kg_positive", "range": { "min": "45.00", "max": "500.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "LOAD": 0.4, "UNLOAD": 0.35, "ATTENDANT_TOGGLE": 0.15, "EMERGENCY_DUMP": 0.1 },
+    "constants": { "weightLimitKg": 2000, "attendantKg": 80 }
+  },
+  {
+    "id": 12,
+    "block": 2,
+    "slug": "parking_lot",
+    "title": "Платна автостоянка",
+    "n03Invariant": "forbid_entry_when_full",
+    "events": [
+      {
+        "code": "ENTRY",
+        "fields": [
+          { "col": "p1", "name": "plate", "type": "token" },
+          { "col": "p2", "name": "minute_of_day", "type": "non_negative_int", "range": { "min": 0, "max": 1439 } }
+        ]
+      },
+      {
+        "code": "EXIT_PAID",
+        "fields": [
+          { "col": "p1", "name": "plate", "type": "token" },
+          { "col": "p2", "name": "duration_min", "type": "positive_int", "range": { "min": 12, "max": 600 } },
+          { "col": "p3", "name": "paid", "type": "money_positive", "range": { "min": "20.00", "max": "420.00" } }
+        ]
+      },
+      {
+        "code": "EMERGENCY_ENTRY",
+        "fields": [
+          { "col": "p1", "name": "plate", "type": "token" },
+          { "col": "p2", "name": "service", "type": "enum_ref", "allowed": ["AMBULANCE", "FIRE"] }
+        ]
+      },
+      {
+        "code": "LOST_TICKET_FINE",
+        "fields": [
+          { "col": "p1", "name": "plate", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "180.00", "max": "650.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "ENTRY": 0.35, "EXIT_PAID": 0.35, "EMERGENCY_ENTRY": 0.05, "LOST_TICKET_FINE": 0.25 },
+    "constants": { "capacity": 120 }
+  },
+  {
+    "id": 13,
+    "block": 2,
+    "slug": "scooter_hub",
+    "title": "Диспетчер прокату електросамокатів",
+    "n03Invariant": "forbid_rent_if_charge_below_15",
+    "events": [
+      {
+        "code": "RESTOCK",
+        "fields": [
+          { "col": "p1", "name": "count", "type": "positive_int", "range": { "min": 3, "max": 22 } }
+        ]
+      },
+      { "code": "RENT_OUT", "fields": [{ "col": "p1", "name": "scooter_id", "type": "token" }] },
+      {
+        "code": "RETURN",
+        "fields": [
+          { "col": "p1", "name": "scooter_id", "type": "token" },
+          { "col": "p2", "name": "charge_percent", "type": "percent_0_100", "range": { "min": "8.00", "max": "98.00" } }
+        ]
+      },
+      { "code": "REMOVE_FOR_SERVICE", "fields": [{ "col": "p1", "name": "scooter_id", "type": "token" }] }
+    ],
+    "eventWeights": { "RESTOCK": 0.2, "RENT_OUT": 0.35, "RETURN": 0.35, "REMOVE_FOR_SERVICE": 0.1 }
+  },
+  {
+    "id": 14,
+    "block": 2,
+    "slug": "aircraft_baggage",
+    "title": "Багажний відсік літака",
+    "n03Invariant": "forbid_load_if_exceeds_max_baggage_weight",
+    "events": [
+      {
+        "code": "CHECK_IN_BAG",
+        "fields": [
+          { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "8.00", "max": "32.00" } },
+          { "col": "p2", "name": "section", "type": "enum_ref", "allowed": ["NOSE", "TAIL"] },
+          { "col": "p3", "name": "tag", "type": "token" }
+        ]
+      },
+      { "code": "REMOVE_BAG", "fields": [{ "col": "p1", "name": "tag", "type": "token" }] },
+      {
+        "code": "CARGO_LOAD",
+        "fields": [
+          { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "45.00", "max": "420.00" } },
+          { "col": "p2", "name": "section", "type": "enum_ref", "allowed": ["NOSE", "TAIL"] }
+        ]
+      },
+      {
+        "code": "REBALANCE",
+        "fields": [
+          { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "20.00", "max": "280.00" } },
+          { "col": "p2", "name": "from_section", "type": "enum_ref", "allowed": ["NOSE", "TAIL"] },
+          { "col": "p3", "name": "to_section", "type": "enum_ref", "allowed": ["NOSE", "TAIL"] }
+        ]
+      }
+    ],
+    "eventWeights": { "CHECK_IN_BAG": 0.5, "REMOVE_BAG": 0.1, "CARGO_LOAD": 0.15, "REBALANCE": 0.25 },
+    "constants": { "maxBaggageKg": 8000 }
+  },
+  {
+    "id": 15,
+    "block": 3,
+    "slug": "rpg_wallet",
+    "title": "Гаманець та інвентар гравця в RPG",
+    "n03Invariant": "forbid_purchase_if_insufficient_gold",
+    "events": [
+      {
+        "code": "LOOT",
+        "fields": [
+          { "col": "p1", "name": "gold", "type": "money_positive", "range": { "min": "5.00", "max": "350.00" } }
+        ]
+      },
+      {
+        "code": "SHOP_BUY",
+        "fields": [
+          { "col": "p1", "name": "item", "type": "token" },
+          { "col": "p2", "name": "gold", "type": "money_positive", "range": { "min": "25.00", "max": "2500.00" } }
+        ]
+      },
+      {
+        "code": "QUEST_REWARD",
+        "fields": [
+          { "col": "p1", "name": "gold", "type": "money_positive", "range": { "min": "100.00", "max": "5000.00" } },
+          { "col": "p2", "name": "xp", "type": "non_negative_int", "range": { "min": 50, "max": 3500 } }
+        ]
+      },
+      { "code": "DEATH_PENALTY", "fields": [] }
+    ],
+    "eventWeights": { "LOOT": 0.35, "SHOP_BUY": 0.3, "QUEST_REWARD": 0.25, "DEATH_PENALTY": 0.1 },
+    "constants": { "deathPenaltyPercent": 10 }
+  },
+  {
+    "id": 16,
+    "block": 3,
+    "slug": "battle_pass",
+    "title": "Система прогресу Battle Pass",
+    "n03Invariant": "forbid_level_above_max",
+    "events": [
+      {
+        "code": "DAILY_QUEST",
+        "fields": [
+          { "col": "p1", "name": "points", "type": "positive_int", "range": { "min": 120, "max": 750 } }
+        ]
+      },
+      {
+        "code": "MATCH_WIN",
+        "fields": [
+          { "col": "p1", "name": "points", "type": "positive_int", "range": { "min": 280, "max": 1500 } }
+        ]
+      },
+      {
+        "code": "CLAIM_TIER",
+        "fields": [
+          { "col": "p1", "name": "tier", "type": "positive_int", "range": { "min": 1, "max": 100 } }
+        ]
+      },
+      {
+        "code": "PREMIUM_BOOST",
+        "fields": [
+          { "col": "p1", "name": "levels_granted", "type": "positive_int", "range": { "min": 5, "max": 5 } }
+        ]
+      }
+    ],
+    "eventWeights": { "DAILY_QUEST": 0.4, "MATCH_WIN": 0.3, "CLAIM_TIER": 0.2, "PREMIUM_BOOST": 0.1 },
+    "constants": { "maxLevel": 100 }
+  },
+  {
+    "id": 17,
+    "block": 3,
+    "slug": "stamina",
+    "title": "Баланс енергії / витривалості",
+    "n03Invariant": "forbid_raid_if_insufficient_stamina",
+    "events": [
+      {
+        "code": "RAID",
+        "fields": [
+          { "col": "p1", "name": "cost", "type": "positive_int", "range": { "min": 18, "max": 35 } }
+        ]
+      },
+      {
+        "code": "TICK_REGEN",
+        "fields": [
+          { "col": "p1", "name": "minutes", "type": "positive_int", "range": { "min": 1, "max": 90 } }
+        ]
+      },
+      {
+        "code": "POTION",
+        "fields": [
+          { "col": "p1", "name": "restore", "type": "positive_int", "range": { "min": 50, "max": 50 } }
+        ]
+      },
+      {
+        "code": "MAX_INCREASE",
+        "fields": [
+          { "col": "p1", "name": "new_max", "type": "positive_int", "range": { "min": 100, "max": 180 } }
+        ]
+      }
+    ],
+    "eventWeights": { "RAID": 0.45, "TICK_REGEN": 0.35, "POTION": 0.15, "MAX_INCREASE": 0.05 },
+    "constants": { "defaultRaidCost": 20, "regenPerMinute": 1 }
+  },
+  {
+    "id": 18,
+    "block": 3,
+    "slug": "auction_house",
+    "title": "Аукціон ігрових предметів",
+    "n03Invariant": "forbid_bid_below_min_increment",
+    "events": [
+      {
+        "code": "LIST",
+        "fields": [
+          { "col": "p1", "name": "start_price", "type": "money_positive", "range": { "min": "200.00", "max": "15000.00" } }
+        ]
+      },
+      {
+        "code": "BID",
+        "fields": [
+          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "250.00", "max": "25000.00" } }
+        ]
+      },
+      {
+        "code": "OUTBID_REFUND",
+        "fields": [
+          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "200.00", "max": "24000.00" } }
+        ]
+      },
+      {
+        "code": "BUYOUT",
+        "fields": [
+          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p2", "name": "price", "type": "money_positive", "range": { "min": "2000.00", "max": "50000.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "LIST": 0.05, "BID": 0.55, "OUTBID_REFUND": 0.3, "BUYOUT": 0.1 },
+    "constants": { "minBidStep": "1.00" }
+  },
+  {
+    "id": 19,
+    "block": 3,
+    "slug": "mmr_leaderboard",
+    "title": "Дошка лідерів (MMR)",
+    "n03Invariant": "forbid_mmr_below_floor",
+    "events": [
+      {
+        "code": "WIN",
+        "fields": [
+          { "col": "p1", "name": "delta", "type": "positive_int", "range": { "min": 12, "max": 42 } }
+        ]
+      },
+      {
+        "code": "LOSS",
+        "fields": [
+          { "col": "p1", "name": "delta", "type": "positive_int", "range": { "min": 12, "max": 38 } }
+        ]
+      },
+      {
+        "code": "RAGE_QUIT",
+        "fields": [
+          { "col": "p1", "name": "penalty", "type": "positive_int", "range": { "min": 25, "max": 75 } }
+        ]
+      },
+      {
+        "code": "SEASON_RESET",
+        "fields": [
+          { "col": "p1", "name": "factor_percent", "type": "percent_0_100", "range": { "min": "40.00", "max": "85.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "WIN": 0.4, "LOSS": 0.4, "RAGE_QUIT": 0.05, "SEASON_RESET": 0.15 },
+    "constants": { "mmrFloor": 0 }
+  },
+  {
+    "id": 20,
+    "block": 3,
+    "slug": "guild_treasury",
+    "title": "Клан-банк",
+    "n03Invariant": "forbid_allocation_exceeds_treasury",
+    "events": [
+      {
+        "code": "DONATE",
+        "fields": [
+          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p2", "name": "gold", "type": "money_positive", "range": { "min": "500.00", "max": "25000.00" } }
+        ]
+      },
+      {
+        "code": "SPEND",
+        "fields": [
+          { "col": "p1", "name": "purpose", "type": "short_label" },
+          { "col": "p2", "name": "gold", "type": "money_positive", "range": { "min": "1200.00", "max": "85000.00" } }
+        ]
+      },
+      {
+        "code": "WAR_TAX",
+        "fields": [
+          { "col": "p1", "name": "gold", "type": "money_positive", "range": { "min": "2500.00", "max": "150000.00" } }
+        ]
+      },
+      {
+        "code": "DONATION_REFUND",
+        "fields": [
+          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p2", "name": "gold", "type": "money_positive", "range": { "min": "100.00", "max": "8000.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "DONATE": 0.4, "SPEND": 0.25, "WAR_TAX": 0.2, "DONATION_REFUND": 0.15 },
+    "constants": { "castleGoalGold": "1000000.00" }
+  },
+  {
+    "id": 21,
+    "block": 3,
+    "slug": "mobile_dual_currency",
+    "title": "Магазин: геми та монети",
+    "n03Invariant": "forbid_upgrade_if_insufficient_coins",
+    "events": [
+      {
+        "code": "BUY_GEMS",
+        "fields": [
+          { "col": "p1", "name": "gems", "type": "positive_int", "range": { "min": 60, "max": 2580 } }
+        ]
+      },
+      {
+        "code": "CONVERT",
+        "fields": [
+          { "col": "p1", "name": "gems_spent", "type": "positive_int", "range": { "min": 10, "max": 400 } },
+          { "col": "p2", "name": "coins_gained", "type": "positive_int", "range": { "min": 1000, "max": 120000 } }
+        ]
+      },
+      {
+        "code": "UPGRADE",
+        "fields": [
+          { "col": "p1", "name": "card", "type": "token" },
+          { "col": "p2", "name": "coins", "type": "positive_int", "range": { "min": 1500, "max": 85000 } }
+        ]
+      },
+      {
+        "code": "DAILY_GIFT",
+        "fields": [
+          { "col": "p1", "name": "gems", "type": "non_negative_int", "range": { "min": 0, "max": 15 } },
+          { "col": "p2", "name": "coins", "type": "non_negative_int", "range": { "min": 200, "max": 8000 } }
+        ]
+      }
+    ],
+    "eventWeights": { "BUY_GEMS": 0.1, "CONVERT": 0.2, "UPGRADE": 0.45, "DAILY_GIFT": 0.25 }
+  },
+  {
+    "id": 22,
+    "block": 4,
+    "slug": "electricity_meter",
+    "title": "Двозонний лічильник електроенергії",
+    "n03Invariant": "analytics_only_no_hard_reject_in_n03",
+    "events": [
+      {
+        "code": "DAY_USAGE",
+        "fields": [
+          { "col": "p1", "name": "kwh", "type": "kwh_positive", "range": { "min": "0.500", "max": "22.000" } }
+        ]
+      },
+      {
+        "code": "NIGHT_USAGE",
+        "fields": [
+          { "col": "p1", "name": "kwh", "type": "kwh_positive", "range": { "min": "0.300", "max": "14.000" } }
+        ]
+      },
+      {
+        "code": "PAYMENT",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "450.00", "max": "4200.00" } }
+        ]
+      },
+      {
+        "code": "SUBSIDY",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "150.00", "max": "1800.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "DAY_USAGE": 0.35, "NIGHT_USAGE": 0.35, "PAYMENT": 0.2, "SUBSIDY": 0.1 },
+    "constants": { "nightTariffFactor": "0.5" }
+  },
+  {
+    "id": 23,
+    "block": 4,
+    "slug": "home_solar_battery",
+    "title": "Домашня СЕС та акумулятор",
+    "n03Invariant": "forbid_discharge_below_critical_percent",
+    "events": [
+      {
+        "code": "GENERATE",
+        "fields": [
+          { "col": "p1", "name": "kwh", "type": "kwh_positive", "range": { "min": "0.150", "max": "5.500" } }
+        ]
+      },
+      {
+        "code": "CONSUME",
+        "fields": [
+          { "col": "p1", "name": "kwh", "type": "kwh_positive", "range": { "min": "0.250", "max": "3.800" } }
+        ]
+      },
+      {
+        "code": "BATTERY",
+        "fields": [
+          { "col": "p1", "name": "delta_kwh", "type": "signed_money", "range": { "min": "0.200", "max": "7.000" } },
+          { "col": "p2", "name": "direction", "type": "enum_ref", "allowed": ["CHARGE", "DISCHARGE"] }
+        ]
+      },
+      {
+        "code": "GRID_EXPORT",
+        "fields": [
+          { "col": "p1", "name": "kwh", "type": "kwh_positive", "range": { "min": "0.100", "max": "4.000" } }
+        ]
+      }
+    ],
+    "eventWeights": { "GENERATE": 0.3, "CONSUME": 0.35, "BATTERY": 0.25, "GRID_EXPORT": 0.1 },
+    "constants": { "batteryCapacityKwh": "13.5", "criticalPercent": 10 }
+  },
+  {
+    "id": 24,
+    "block": 4,
+    "slug": "water_filtration",
+    "title": "Станція очищення води",
+    "n03Invariant": "stop_filtration_when_cartridge_depleted",
+    "events": [
+      {
+        "code": "FILTER_BATCH",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "15.00", "max": "400.00" } }
+        ]
+      },
+      {
+        "code": "FLUSH_DRAIN",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "8.00", "max": "120.00" } }
+        ]
+      },
+      {
+        "code": "REGENERATE",
+        "fields": [
+          { "col": "p1", "name": "salt_kg", "type": "kg_positive", "range": { "min": "1.50", "max": "12.00" } }
+        ]
+      },
+      { "code": "CARTRIDGE_REPLACE", "fields": [] }
+    ],
+    "eventWeights": { "FILTER_BATCH": 0.55, "FLUSH_DRAIN": 0.2, "REGENERATE": 0.15, "CARTRIDGE_REPLACE": 0.1 },
+    "constants": { "cartridgeCapacityLiters": 5000 }
+  },
+  {
+    "id": 25,
+    "block": 4,
+    "slug": "greenhouse_irrigation",
+    "title": "Розумна теплиця: резервуар поливу",
+    "n03Invariant": "forbid_irrigation_below_min_level",
+    "events": [
+      {
+        "code": "REFILL",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "200.00", "max": "800.00" } }
+        ]
+      },
+      {
+        "code": "IRRIGATE",
+        "fields": [
+          { "col": "p1", "name": "zone", "type": "token" },
+          { "col": "p2", "name": "liters", "type": "liters_positive", "range": { "min": "15.00", "max": "180.00" } }
+        ]
+      },
+      {
+        "code": "ADD_FERTILIZER",
+        "fields": [
+          { "col": "p1", "name": "ml", "type": "positive_int", "range": { "min": 50, "max": 800 } }
+        ]
+      },
+      {
+        "code": "EMERGENCY_DRAIN",
+        "fields": [
+          { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "40.00", "max": "350.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "REFILL": 0.2, "IRRIGATE": 0.5, "ADD_FERTILIZER": 0.15, "EMERGENCY_DRAIN": 0.15 },
+    "constants": { "tankCapacityLiters": 2000, "minSensorLiters": 50 }
+  },
+  {
+    "id": 26,
+    "block": 4,
+    "slug": "server_room_hvac",
+    "title": "Розумний кондиціонер у серверній",
+    "n03Invariant": "alert_if_temp_above_limit",
+    "events": [
+      {
+        "code": "HEAT_LOAD",
+        "fields": [
+          { "col": "p1", "name": "delta_c", "type": "kg_positive", "range": { "min": "0.50", "max": "4.00" } }
+        ]
+      },
+      {
+        "code": "COOLING",
+        "fields": [
+          { "col": "p1", "name": "delta_c", "type": "kg_positive", "range": { "min": "0.30", "max": "3.50" } },
+          { "col": "p2", "name": "kwh", "type": "kwh_non_negative", "range": { "min": "0.500", "max": "8.000" } }
+        ]
+      },
+      {
+        "code": "DOOR_OPEN",
+        "fields": [
+          { "col": "p1", "name": "delta_c", "type": "kg_positive", "range": { "min": "0.20", "max": "2.50" } }
+        ]
+      },
+      {
+        "code": "FREE_COOLING",
+        "fields": [
+          { "col": "p1", "name": "delta_c", "type": "kg_positive", "range": { "min": "0.50", "max": "2.50" } }
+        ]
+      }
+    ],
+    "eventWeights": { "HEAT_LOAD": 0.35, "COOLING": 0.35, "DOOR_OPEN": 0.15, "FREE_COOLING": 0.15 },
+    "constants": { "alertLimitC": "25.0" }
+  },
+  {
+    "id": 27,
+    "block": 4,
+    "slug": "coffee_vending",
+    "title": "Вендинговий автомат кави",
+    "n03Invariant": "forbid_drink_if_insufficient_ingredients",
+    "events": [
+      {
+        "code": "BREW",
+        "fields": [
+          { "col": "p1", "name": "drink", "type": "short_label" },
+          { "col": "p2", "name": "beans_g", "type": "positive_int", "range": { "min": 7, "max": 18 } },
+          { "col": "p3", "name": "milk_g", "type": "non_negative_int", "range": { "min": 0, "max": 25 } },
+          { "col": "p4", "name": "price", "type": "money_positive", "range": { "min": "25.00", "max": "65.00" } }
+        ]
+      },
+      {
+        "code": "RESTOCK",
+        "fields": [
+          { "col": "p1", "name": "beans_g", "type": "positive_int", "range": { "min": 500, "max": 2500 } },
+          { "col": "p2", "name": "milk_g", "type": "non_negative_int", "range": { "min": 300, "max": 1500 } }
+        ]
+      },
+      {
+        "code": "CHANGE_PAYOUT",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "1.00", "max": "20.00" } }
+        ]
+      },
+      {
+        "code": "RINSE",
+        "fields": [
+          { "col": "p1", "name": "water_ml", "type": "positive_int", "range": { "min": 80, "max": 250 } }
+        ]
+      }
+    ],
+    "eventWeights": { "BREW": 0.55, "RESTOCK": 0.15, "CHANGE_PAYOUT": 0.2, "RINSE": 0.1 }
+  },
+  {
+    "id": 28,
+    "block": 4,
+    "slug": "ev_charging",
+    "title": "Зарядна станція EV",
+    "n03Invariant": "stop_charge_when_budget_exhausted",
+    "events": [
+      {
+        "code": "SESSION_START",
+        "fields": [
+          { "col": "p1", "name": "port_kw", "type": "positive_int", "range": { "min": 22, "max": 350 } },
+          { "col": "p2", "name": "client_balance", "type": "money_positive", "range": { "min": "150.00", "max": "3000.00" } }
+        ]
+      },
+      {
+        "code": "ENERGY_TICK",
+        "fields": [
+          { "col": "p1", "name": "kwh", "type": "kwh_positive", "range": { "min": "0.800", "max": "12.000" } },
+          { "col": "p2", "name": "charge_uah", "type": "money_positive", "range": { "min": "12.00", "max": "380.00" } }
+        ]
+      },
+      { "code": "SESSION_END", "fields": [{ "col": "p1", "name": "session_id", "type": "token" }] },
+      {
+        "code": "IDLE_PENALTY",
+        "fields": [
+          { "col": "p1", "name": "amount", "type": "money_positive", "range": { "min": "20.00", "max": "150.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "SESSION_START": 0.1, "ENERGY_TICK": 0.65, "SESSION_END": 0.15, "IDLE_PENALTY": 0.1 }
+  },
+  {
+    "id": 29,
+    "block": 5,
+    "slug": "mobile_plan",
+    "title": "Тарифний пакет мобільного зв'язку",
+    "n03Invariant": "block_data_when_data_depleted",
+    "events": [
+      {
+        "code": "PLAN_RESET",
+        "fields": [
+          { "col": "p1", "name": "gb", "type": "positive_int", "range": { "min": 8, "max": 50 } },
+          { "col": "p2", "name": "minutes", "type": "positive_int", "range": { "min": 300, "max": 1500 } }
+        ]
+      },
+      {
+        "code": "DATA_SESSION",
+        "fields": [
+          { "col": "p1", "name": "mb", "type": "positive_int", "range": { "min": 5, "max": 850 } }
+        ]
+      },
+      {
+        "code": "VOICE_CALL",
+        "fields": [
+          { "col": "p1", "name": "minutes", "type": "positive_int", "range": { "min": 1, "max": 45 } }
+        ]
+      },
+      {
+        "code": "WEEKEND_UNLIMITED",
+        "fields": [
+          { "col": "p1", "name": "hours", "type": "hours_1_24", "range": { "min": 6, "max": 24 } }
+        ]
+      }
+    ],
+    "eventWeights": { "PLAN_RESET": 0.05, "DATA_SESSION": 0.55, "VOICE_CALL": 0.3, "WEEKEND_UNLIMITED": 0.1 }
+  },
+  {
+    "id": 30,
+    "block": 5,
+    "slug": "cloud_drive",
+    "title": "Хмарне сховище",
+    "n03Invariant": "forbid_upload_if_exceeds_free_space",
+    "events": [
+      {
+        "code": "UPLOAD",
+        "fields": [
+          { "col": "p1", "name": "file", "type": "token" },
+          { "col": "p2", "name": "size_mb", "type": "positive_int", "range": { "min": 1, "max": 1200 } },
+          { "col": "p3", "name": "kind", "type": "enum_ref", "allowed": ["DOC", "IMG", "VID", "OTHER"] }
+        ]
+      },
+      {
+        "code": "TRASH",
+        "fields": [
+          { "col": "p1", "name": "file", "type": "token" },
+          { "col": "p2", "name": "size_mb", "type": "positive_int", "range": { "min": 1, "max": 1200 } }
+        ]
+      },
+      { "code": "EMPTY_TRASH", "fields": [] },
+      {
+        "code": "PROMO_SPACE",
+        "fields": [
+          { "col": "p1", "name": "extra_mb", "type": "positive_int", "range": { "min": 512, "max": 5120 } }
+        ]
+      }
+    ],
+    "eventWeights": { "UPLOAD": 0.45, "TRASH": 0.3, "EMPTY_TRASH": 0.1, "PROMO_SPACE": 0.15 },
+    "constants": { "baseQuotaMb": 15360 }
+  },
+  {
+    "id": 31,
+    "block": 5,
+    "slug": "audiobook_credits",
+    "title": "Абонемент аудіокниг",
+    "n03Invariant": "forbid_checkout_with_zero_credits",
+    "events": [
+      {
+        "code": "MONTHLY_GRANT",
+        "fields": [
+          { "col": "p1", "name": "credits", "type": "positive_int", "range": { "min": 1, "max": 3 } }
+        ]
+      },
+      { "code": "BUY_BOOK", "fields": [{ "col": "p1", "name": "book_id", "type": "token" }] },
+      { "code": "RETURN_BOOK", "fields": [{ "col": "p1", "name": "book_id", "type": "token" }] },
+      {
+        "code": "BUY_CREDIT_PACK",
+        "fields": [
+          { "col": "p1", "name": "credits", "type": "positive_int", "range": { "min": 1, "max": 12 } }
+        ]
+      }
+    ],
+    "eventWeights": { "MONTHLY_GRANT": 0.15, "BUY_BOOK": 0.45, "RETURN_BOOK": 0.15, "BUY_CREDIT_PACK": 0.25 }
+  },
+  {
+    "id": 32,
+    "block": 5,
+    "slug": "fitness_calories",
+    "title": "Фітнес-трекер енергобалансу",
+    "n03Invariant": "analytics_goal_tracking",
+    "events": [
+      {
+        "code": "MEAL",
+        "fields": [
+          { "col": "p1", "name": "label", "type": "short_label" },
+          { "col": "p2", "name": "kcal", "type": "kcal_int", "range": { "min": 80, "max": 1500 } }
+        ]
+      },
+      {
+        "code": "WORKOUT",
+        "fields": [
+          { "col": "p1", "name": "activity", "type": "short_label" },
+          { "col": "p2", "name": "kcal", "type": "kcal_int", "range": { "min": 50, "max": 1200 } },
+          { "col": "p3", "name": "minutes", "type": "workout_minutes", "range": { "min": 10, "max": 90 } }
+        ]
+      },
+      {
+        "code": "BMR_TICK",
+        "fields": [
+          { "col": "p1", "name": "hours", "type": "hours_1_24", "range": { "min": 1, "max": 8 } },
+          { "col": "p2", "name": "kcal_per_hour", "type": "kcal_per_hour_bmr", "range": { "min": 55, "max": 95 } }
+        ]
+      },
+      {
+        "code": "SCALE_ADJUST",
+        "fields": [
+          { "col": "p1", "name": "kcal_delta", "type": "signed_kcal_delta", "range": { "min": "-400.00", "max": "400.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "MEAL": 0.35, "WORKOUT": 0.3, "BMR_TICK": 0.3, "SCALE_ADJUST": 0.05 },
+    "constants": { "dailyGoalDeficitKcal": 500 }
+  },
+  {
+    "id": 33,
+    "block": 5,
+    "slug": "gym_membership",
+    "title": "Абонемент спортивного клубу",
+    "n03Invariant": "forbid_entry_when_frozen_or_no_visits",
+    "events": [
+      {
+        "code": "ACTIVATE",
+        "fields": [
+          { "col": "p1", "name": "visits", "type": "positive_int", "range": { "min": 8, "max": 36 } }
+        ]
+      },
+      { "code": "CHECK_IN", "fields": [] },
+      { "code": "GUEST_VISIT", "fields": [{ "col": "p1", "name": "guest", "type": "token" }] },
+      {
+        "code": "FREEZE",
+        "fields": [
+          { "col": "p1", "name": "days", "type": "positive_int", "range": { "min": 7, "max": 30 } }
+        ]
+      }
+    ],
+    "eventWeights": { "ACTIVATE": 0.05, "CHECK_IN": 0.6, "GUEST_VISIT": 0.15, "FREEZE": 0.2 }
+  },
+  {
+    "id": 34,
+    "block": 5,
+    "slug": "ects_tracker",
+    "title": "Трекер ECTS студента",
+    "n03Invariant": "check_progress_toward_60_credits",
+    "events": [
+      {
+        "code": "PASS",
+        "fields": [
+          { "col": "p1", "name": "course", "type": "token" },
+          { "col": "p2", "name": "ects", "type": "positive_int", "range": { "min": 3, "max": 8 } },
+          { "col": "p3", "name": "grade", "type": "positive_int", "range": { "min": 60, "max": 100 } }
+        ]
+      },
+      {
+        "code": "TRANSFER",
+        "fields": [
+          { "col": "p1", "name": "course", "type": "token" },
+          { "col": "p2", "name": "ects", "type": "positive_int", "range": { "min": 3, "max": 8 } },
+          { "col": "p3", "name": "grade", "type": "positive_int", "range": { "min": 60, "max": 100 } }
+        ]
+      },
+      { "code": "FAIL_DEBT", "fields": [{ "col": "p1", "name": "course", "type": "token" }] },
+      {
+        "code": "CLEAR_DEBT",
+        "fields": [
+          { "col": "p1", "name": "course", "type": "token" },
+          { "col": "p2", "name": "grade", "type": "positive_int", "range": { "min": 60, "max": 90 } }
+        ]
+      }
+    ],
+    "eventWeights": { "PASS": 0.45, "TRANSFER": 0.15, "FAIL_DEBT": 0.15, "CLEAR_DEBT": 0.25 },
+    "constants": { "promotionThresholdEcts": 60 }
+  },
+  {
+    "id": 35,
+    "block": 5,
+    "slug": "freelance_time",
+    "title": "Тайм-трекер фрілансера",
+    "n03Invariant": "forbid_time_entry_outside_1min_24h",
+    "events": [
+      {
+        "code": "LOG_TIME",
+        "fields": [
+          { "col": "p1", "name": "project", "type": "token" },
+          { "col": "p2", "name": "task", "type": "token" },
+          { "col": "p3", "name": "hours", "type": "money_positive", "range": { "min": "0.25", "max": "8.00" } }
+        ]
+      },
+      { "code": "INVOICE", "fields": [{ "col": "p1", "name": "project", "type": "token" }] },
+      {
+        "code": "PAYMENT",
+        "fields": [
+          { "col": "p1", "name": "project", "type": "token" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "1200.00", "max": "45000.00" } }
+        ]
+      },
+      {
+        "code": "UNPAID_FIX",
+        "fields": [
+          { "col": "p1", "name": "project", "type": "token" },
+          { "col": "p2", "name": "hours", "type": "money_positive", "range": { "min": "0.25", "max": "2.50" } }
+        ]
+      }
+    ],
+    "eventWeights": { "LOG_TIME": 0.55, "INVOICE": 0.15, "PAYMENT": 0.2, "UNPAID_FIX": 0.1 },
+    "constants": { "minHours": "0.0167", "maxHours": "24.0" }
+  }
+]

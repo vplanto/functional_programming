@@ -1,0 +1,217 @@
+{
+  "$schema": "./n04_contract.schema.json",
+  "meta": {
+    "version": "1.1.0",
+    "alignedWith": "docs/n03_state_modeling_tasks.md",
+    "studentGuide": "docs/n04_state_event_logs.md",
+    "rangeSemantics": "min/max у primitiveTypes — межі валідації (smart constructor). Генератор CSV використовує ті самі межі; у полі варіанта можна додати range { min, max } для звуження."
+  },
+  "csv": {
+    "delimiter": ",",
+    "encoding": "utf-8",
+    "header": ["event", "p1", "p2", "p3", "p4"],
+    "textFields": {
+      "format": "token",
+      "pattern": "^[A-Za-z0-9._-]{1,64}$"
+    }
+  },
+  "generationDefaults": {
+    "rowsPerFile": 100000,
+    "seedOffset": 42,
+    "syntaxErrorRate": 0.05
+  },
+  "primitiveTypes": {
+    "money_positive": {
+      "parse": "decimal",
+      "scale": 2,
+      "minExclusive": "0",
+      "max": "9999999.99"
+    },
+    "money_non_negative": {
+      "parse": "decimal",
+      "scale": 2,
+      "min": "0",
+      "max": "9999999.99"
+    },
+    "signed_money": {
+      "parse": "decimal",
+      "scale": 2,
+      "min": "-9999999.99",
+      "max": "9999999.99"
+    },
+    "positive_int": {
+      "parse": "int",
+      "minExclusive": 0,
+      "max": 2147483647
+    },
+    "non_negative_int": {
+      "parse": "int",
+      "min": 0,
+      "max": 2147483647
+    },
+    "hours_1_24": {
+      "parse": "int",
+      "min": 1,
+      "max": 24
+    },
+    "kcal_int": {
+      "parse": "int",
+      "min": 1,
+      "max": 3500
+    },
+    "workout_minutes": {
+      "parse": "int",
+      "min": 5,
+      "max": 240
+    },
+    "kcal_per_hour_bmr": {
+      "parse": "int",
+      "min": 45,
+      "max": 120
+    },
+    "signed_kcal_delta": {
+      "parse": "decimal",
+      "scale": 2,
+      "min": "-3500.00",
+      "max": "3500.00"
+    },
+    "percent_0_100": {
+      "parse": "decimal",
+      "scale": 2,
+      "min": "0",
+      "max": "100"
+    },
+    "kwh_positive": {
+      "parse": "decimal",
+      "scale": 3,
+      "minExclusive": "0",
+      "max": "99999.999"
+    },
+    "kwh_non_negative": {
+      "parse": "decimal",
+      "scale": 3,
+      "min": "0",
+      "max": "99999.999"
+    },
+    "liters_positive": {
+      "parse": "decimal",
+      "scale": 2,
+      "minExclusive": "0",
+      "max": "9999.99"
+    },
+    "kg_positive": {
+      "parse": "decimal",
+      "scale": 2,
+      "minExclusive": "0",
+      "max": "99999.99"
+    },
+    "token": {
+      "parse": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,64}$"
+    },
+    "short_label": {
+      "parse": "string",
+      "pattern": "^[A-Za-z0-9._-]{1,32}$"
+    },
+    "enum_ref": {
+      "parse": "enum"
+    }
+  },
+  "errorStrategies": {
+    "unknown_event": {
+      "layer": "syntax",
+      "suggestedDomainError": "UnknownEvent",
+      "mutations": ["NOT_AN_EVENT", "RIDE_EXTRA"]
+    },
+    "column_count": {
+      "layer": "syntax",
+      "suggestedDomainError": "MalformedRow",
+      "mutations": ["truncate", "extra_column"]
+    },
+    "empty_event": {
+      "layer": "syntax",
+      "suggestedDomainError": "MalformedRow",
+      "mutations": ["empty"]
+    },
+    "type_money_non_positive": {
+      "layer": "parse",
+      "appliesToTypes": ["money_positive"],
+      "suggestedDomainError": "InvalidAmount",
+      "mutations": ["0", "-0.01", "-100.00"]
+    },
+    "type_money_malformed": {
+      "layer": "parse",
+      "appliesToTypes": ["money_positive", "money_non_negative", "signed_money", "signed_kcal_delta"],
+      "suggestedDomainError": "InvalidAmount",
+      "mutations": ["", "12,34", "1.2.3", "NaN", "abc"]
+    },
+    "type_kcal_out_of_range": {
+      "layer": "parse",
+      "appliesToTypes": ["kcal_int", "kcal_per_hour_bmr"],
+      "suggestedDomainError": "InvalidKcal",
+      "mutations": ["0", "-10", "99999"]
+    },
+    "type_workout_minutes_out_of_range": {
+      "layer": "parse",
+      "appliesToTypes": ["workout_minutes"],
+      "suggestedDomainError": "InvalidDuration",
+      "mutations": ["0", "4", "500"]
+    },
+    "type_signed_kcal_out_of_range": {
+      "layer": "parse",
+      "appliesToTypes": ["signed_kcal_delta"],
+      "suggestedDomainError": "InvalidKcalDelta",
+      "mutations": ["-99999", "99999", "0.001"]
+    },
+    "type_positive_int_violation": {
+      "layer": "parse",
+      "appliesToTypes": ["positive_int"],
+      "suggestedDomainError": "InvalidQuantity",
+      "mutations": ["0", "-1", "-999"]
+    },
+    "type_int_malformed": {
+      "layer": "parse",
+      "appliesToTypes": ["positive_int", "non_negative_int", "hours_1_24", "kcal_int", "workout_minutes", "kcal_per_hour_bmr"],
+      "suggestedDomainError": "InvalidQuantity",
+      "mutations": ["", "3.5", "1e3", "xx"]
+    },
+    "type_hours_out_of_range": {
+      "layer": "parse",
+      "appliesToTypes": ["hours_1_24"],
+      "suggestedDomainError": "InvalidHours",
+      "mutations": ["0", "25", "100", "-3"]
+    },
+    "type_percent_out_of_range": {
+      "layer": "parse",
+      "appliesToTypes": ["percent_0_100"],
+      "suggestedDomainError": "InvalidPercent",
+      "mutations": ["-1", "101", "150.0"]
+    },
+    "type_token_invalid": {
+      "layer": "parse",
+      "appliesToTypes": ["token", "short_label"],
+      "suggestedDomainError": "InvalidToken",
+      "mutations": ["", "bad_token", "invalid,comma"]
+    },
+    "type_enum_invalid": {
+      "layer": "parse",
+      "appliesToTypes": ["enum_ref"],
+      "suggestedDomainError": "InvalidEnumValue",
+      "mutations": ["__INVALID__"]
+    },
+    "type_kwh_non_positive": {
+      "layer": "parse",
+      "appliesToTypes": ["kwh_positive"],
+      "suggestedDomainError": "InvalidEnergy",
+      "mutations": ["0", "-1.0"]
+    }
+  },
+  "defaultInjectionProfile": {
+    "weights": {
+      "unknown_event": 0.12,
+      "column_count": 0.08,
+      "empty_event": 0.05,
+      "field_type_errors": 0.75
+    }
+  }
+}

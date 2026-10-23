@@ -31,7 +31,8 @@ hub: true
 - [n00. Налаштування середовища та Git](n00_env_and_git.md)
 - [n01. Наскрізний проєкт «Cyber Tunnel Runner»](n01_cyber_tunnel_runner.md)
 - [n02. Програма СРС (60 годин) та рекомендовані міжнародні курси](n02_recommended_courses.md)
-- [n03. Варіанти завдань для моделювання стану](n03_state_modeling_tasks.md)
+- [Варіанти завдань для моделювання стану](n03_state_modeling_tasks.md)
+- [Журнали подій (CSV) та імпорт через Railway-Oriented Programming](n04_state_event_logs.md)
 
 ### Практикуми та Лабораторні
 - [p00. Практика 00: Сократівський тьютор (робота з ШІ)](p00_socratic_tutor.md)
