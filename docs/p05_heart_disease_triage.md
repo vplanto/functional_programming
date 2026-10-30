@@ -1,7 +1,7 @@
 # Практика 05: Кардіологічний MISD Консиліум (Cleveland Heart Disease Triage)
 
 > **Декларація курсу.** Академічна доброчесність та авторство матеріалів — у [DISCLAIMER.md](DISCLAIMER.md).  
-> 💡 **Концепція наскрізного проєкту:** Еталонний проєкт курсу, що продовжує принципи залізничного парсингу та конвеєрів із [Практики 04](p04_transaction_pipeline.md), демонструючи таксономію **MISD (Multiple Instruction, Single Data)** та мажоритарний консенсус на реальних кардіологічних даних Cleveland Heart Disease.
+> **Концепція наскрізного проєкту:** Еталонний проєкт курсу, що продовжує принципи залізничного парсингу та конвеєрів із [Практики 04](p04_transaction_pipeline.md), демонструючи таксономію **MISD (Multiple Instruction, Single Data)** та мажоритарний консенсус на реальних кардіологічних даних Cleveland Heart Disease.
 
 ---
 
@@ -28,7 +28,7 @@
 2. **Палата спостереження (Дообстеження):** Спірні симптоми.
 3. **Амбулаторне направлення додому:** Ризик інфаркту мінімальний.
 
-> ⚠️ **Ціна помилки асиметрична:**
+> **Ціна помилки асиметрична:**
 > * **False Positive (Хибна тривога):** Пацієнт займає дефіцитне ліжко — неприємно, але людина жива.
 > * **False Negative (Пропуск інфаркту):** Пацієнта відпустили додому, де за 2 години настає зупинка серця. **Це неприпустимо.**
 
@@ -39,7 +39,7 @@
 ## 2. Дані: Cleveland Heart Disease Dataset
 
 Ми використовуємо класичний золотий стандарт кардіології — [Cleveland Heart Disease (UCI Machine Learning Repository)](https://archive.ics.uci.edu/dataset/45/heart+disease):
-* 🔗 **Офіційне першоджерело:** [UCI ML Repository: Heart Disease Dataset](https://archive.ics.uci.edu/dataset/45/heart+disease) (Cleveland Clinic Foundation, Dr. Robert Detrano).
+* **Офіційне першоджерело:** [UCI ML Repository: Heart Disease Dataset](https://archive.ics.uci.edu/dataset/45/heart+disease) (Cleveland Clinic Foundation, Dr. Robert Detrano).
 * **Розмір:** 303 реальні пацієнти, 14 верифікованих клінічних показників.
 
 ### Клінічні атрибути пацієнта:
@@ -84,19 +84,87 @@
                            [Consensus Arbiter]
                      (Мажоритарний кворум 2/3)
                                       │
-         ┌────────────────────────────┼────────────────────────────┐
-         ▼                            ▼                            ▼
-🔴 CRITICAL_HOSPITALIZE      🟡 WARNING_OBSERVATION       🟢 LOW_RISK_DISCHARGE
- (Негайна реанімація)         (Сумнів / Дообстеження)        (Амбулаторно додому)
+    ┌───────────────────┬─────────────┴─────────────┬───────────────────┐
+    ▼                   ▼                           ▼                   ▼
+CriticalHospitalize  SplitOpinionDisagreement  ModerateRiskObservation  LowRiskDischarge
+(Реанімація: >=2 H)  (Арбітраж: 1 High)        (Нагляд: >=2 Mod)        (Додому: >=2 Low)
 ```
 
 ---
 
-## 4. Три офіційні медичні алгоритми
+## 4. Доменна модель та алгебраїчні типи даних (domain.scala)
+
+За принципами Type-Driven Design із [Лекції 04](04_algebraic_data_types.md) проєктування починається не з алгоритмів, а зі строгих типів домену у [domain.scala](https://github.com/vplanto/functional_programming/blob/main/04_heart_triage/src/main/scala/triage/domain.scala). Кожен діагностичний модуль підкоряється єдиній сигнатурі `PatientRecord => Diagnosis`, а арбітр згортає їхні оцінки у `TriageVerdict`.
+
+```scala
+// 1. Sum Type (перелік синглтонів): дискретний рівень ризику одного лікаря
+enum RiskLevel:
+  case Low, Moderate, High
+
+// 2. Product Type: незмінна картка пацієнта (Single Data для всіх 3 алгоритмів)
+case class PatientRecord(
+  id: Int,
+  age: Double,
+  sex: Double,
+  cp: Double,
+  trestbps: Double,
+  chol: Double,
+  fbs: Double,
+  restecg: Double,
+  thalach: Double,
+  exang: Double,
+  oldpeak: Double,
+  slope: Double,
+  ca: Option[Double],   // у CSV трапляється '?' -> чесний Option замість null чи -1.0
+  thal: Option[Double], // аналогічно: None, якщо сцинтиграфію не проводили
+  target: Int           // еталонний діагноз для валідації: 0 = здоровий, 1..4 = ІХС
+):
+  def isHealthyAccordingToGroundTruth: Boolean  = target == 0
+  def hasDiseaseAccordingToGroundTruth: Boolean = target > 0
+
+// 3. Product Type: стандартизований висновок одного діагностичного алгоритму
+case class Diagnosis(
+  evaluatorName: String,
+  risk: RiskLevel,
+  score: Double,
+  reasoning: String
+)
+
+// 4. Параметризований Sum Type: взаємовиключні рішення консиліуму
+enum TriageVerdict:
+  case CriticalHospitalize(patientId: Int, highVotes: Int, diagnoses: List[Diagnosis])
+  case SplitOpinionDisagreement(patientId: Int, summary: String, diagnoses: List[Diagnosis])
+  case ModerateRiskObservation(patientId: Int, moderateVotes: Int, diagnoses: List[Diagnosis])
+  case LowRiskDischarge(patientId: Int, lowVotes: Int, diagnoses: List[Diagnosis])
+
+  def patientId: Int
+  def diagnoses: List[Diagnosis]
+  def isCritical: Boolean = this match
+    case CriticalHospitalize(_, _, _) => true
+    case _                            => false
+```
+
+### Архітектурний розбір ADT:
+
+* **`RiskLevel` — простий тип-сума («АБО» на синглтонах):**  
+  Замість сирих рядків `"HIGH"` чи магічних констант `0, 1, 2` оцінка замкнена у три фіксовані стани: `Low + Moderate + High`. Оскільки варіанти не мають параметрів, компілятор створює для них єдині екземпляри в пам'яті (нуль алокацій для GC) і на етапі компіляції відсікає будь-які одруківки.
+
+* **`PatientRecord` — тип-добуток («І») та чесні пропуски даних:**  
+  Усі 14 показників існують у картці пацієнта одночасно й незалежно, тому `case class` тут повністю виправданий. Зверніть увагу на **`ca: Option[Double]`** та **`thal: Option[Double]`**: у сирому Cleveland CSV частина рядків містить `?` (обстеження не проводили). Замість небезпечного `null` або фіктивного числа `-1.0` (яке непомітно спотворило б медичні формули) відсутність вимірювання зафіксована прямо в типі поля.
+
+* **`Diagnosis` — уніфікований контракт діагноста (Product Type):**  
+  Внутрішня математика трьох протоколів кардинально різна (порогові маркери AHA, бальні таблиці Фрамінгема, стрес-індекс Дюка), проте на виході кожен повертає одну й ту саму структуру `Diagnosis`. Це дозволяє арбітру працювати з однорідним списком функцій `List[PatientRecord => Diagnosis]`, не знаючи внутрішніх деталей жодного алгоритму.
+
+* **`TriageVerdict` — параметризований тип-сума («Make Illegal States Unrepresentable»):**  
+  У наївному ООП фінальний вердикт часто моделюють одним класом із полями `status: String`, `highVotes: Int`, `splitSummary: String`, дозволяючи суперечливі комбінації (наприклад, статус `"LOW_RISK"` одночасно з непорожнім `splitSummary`). У `enum TriageVerdict` кожна гілка несе **лише власні дані**: `SplitOpinionDisagreement` містить текстовий розподіл голосів `summary`, а кворумні гілки — точний лічильник голосів більшості (`highVotes`, `moderateVotes`, `lowVotes`). До того ж закрита ієрархія `enum` гарантує вичерпну перевірку (**Exhaustiveness Check**) у `match`.
+
+---
+
+## 5. Три офіційні медичні алгоритми
 
 ### Алгоритм 1: Протокол клінічних настанов AHA/ACC (2017)
 
-* 🔗 **Офіційне джерело:** [2017 ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults (Circulation)](https://www.ahajournals.org/doi/10.1161/circulationaha.117.032582).
+* **Офіційне джерело:** [2017 ACC/AHA/AAPA/ABC/ACPM/AGS/APhA/ASH/ASPC/NMA/PCNA Guideline for the Prevention, Detection, Evaluation, and Management of High Blood Pressure in Adults (Circulation)](https://www.ahajournals.org/doi/10.1161/circulationaha.117.032582).
 * **Суть методу:** Оцінка прямих порогових факторів ризику серцево-судинних катастроф:
   1. **Артеріальна гіпертензія 2 ступеня:** $\text{trestbps} \ge 140$ мм рт. ст.
   2. **Виражена гіперхолестеринемія:** $\text{chol} \ge 240$ мг/дл.
@@ -108,30 +176,66 @@
   * $1$ критичний маркер $\implies$ **Moderate Risk**  
   * $0$ маркерів $\implies$ **Low Risk**
 
-#### ⚠️ Методичний акцент: «Пастка імперативності» vs «Правила як дані»
+#### Інженерний акцент: Наївна ООП-імплементація vs «Правила як дані»
 
-Студенти з ООП-бекграундом інстинктивно пишуть Java-код: мутабельний буфер `ListBuffer` та лічильник `var flags += 1`.  
-У чистому ФП ми моделюємо перевірки як **дані**, використовуючи `Option.when` та `.flatten`:
+Наївна ООП-імплементація зашиває медичні критерії в серію імперативних `if`-інструкцій, кожна з яких мутує зовнішній список `ArrayList`:
+
+```java
+// Наївна ООП-імплементація (правила розмазані по імперативних if з мутацією списку):
+List<String> reasons = new ArrayList<>();
+
+if (p.getTrestbps() >= 140.0) {
+    reasons.add(String.format("Hypertension Stage 2 (%.0f mmHg >= 140)", p.getTrestbps()));
+}
+if (p.getChol() >= 240.0) {
+    reasons.add(String.format("Hypercholesterolemia (%.0f mg/dL >= 240)", p.getChol()));
+}
+if (p.getCp() == 4.0) {
+    reasons.add("Asymptomatic ischemia (Type 4 Chest Pain)");
+}
+if (p.getCa() != null && p.getCa() > 0.0) { // '?' у CSV -> ручний захист від NPE
+    reasons.add(String.format("Coronary fluoroscopy calcification (%.0f vessels)", p.getCa()));
+}
+if (p.getFbs() == 1.0 && p.getTrestbps() >= 130.0) {
+    reasons.add("Diabetic cardiovascular risk");
+}
+
+int criticalFlags = reasons.size();
+```
+
+У чому інженерні слабкості такого підходу:
+* **Правила зашиті в потік керування, а не в дані:** кожна перевірка жорстко прив'язана до побічного ефекту `reasons.add(...)`. Такі `if`-блоки неможливо передати як параметр, підмінити для конкретного відділення чи протестувати ізольовано.
+* **Ручний захист від `null`:** для поля з можливими пропусками `ca` розробник мусить сам пам'ятати про перевірку `p.getCa() != null` перед порівнянням `> 0.0` — компілятор не захистить від `NullPointerException`.
+
+У функціональному підході ([AhaProtocol.scala](https://github.com/vplanto/functional_programming/blob/main/04_heart_triage/src/main/scala/triage/algorithms/AhaProtocol.scala)) перевірки описуються декларативно — **як незмінний список виразів** `List[Option[String]]`:
 
 ```scala
-// Чисте ФП без жодного var чи ListBuffer:
+// ФП-підхід («Правила як дані» — кожне правило є незалежним значенням):
 val rules: List[Option[String]] = List(
   Option.when(p.trestbps >= 140.0)(f"Hypertension Stage 2 (${p.trestbps}%.0f mmHg >= 140)"),
   Option.when(p.chol >= 240.0)(f"Hypercholesterolemia (${p.chol}%.0f mg/dL >= 240)"),
   Option.when(p.cp == 4.0)("Asymptomatic ischemia (Type 4 Chest Pain)"),
-  p.ca.filter(_ > 0.0).map(v => f"Coronary calcification ($v%.0f vessels)"),
+  p.ca.filter(_ > 0.0).map(v => f"Coronary fluoroscopy calcification ($v%.0f vessels)"),
   Option.when(p.fbs == 1.0 && p.trestbps >= 130.0)("Diabetic cardiovascular risk")
 )
 
 val activeReasons: List[String] = rules.flatten
 val criticalFlags: Int          = activeReasons.size
 ```
-* **Чому це важливо:** Жодного стану, жодної мутації. Метод `.flatten` елегантно відкидає `None`, лишаючи тільки активовані зауваження.
+
+**Розбір механіки по кроках:**
+* **`Option.when(умова)(результат)`** — лаконічний конструктор для звичайних числових полів (`Double`): повертає `Some(результат)`, якщо умова істинна, або `None`, якщо показник у нормі.
+* **Чому для `p.ca` використано `p.ca.filter(_ > 0.0).map(...)`?**  
+  Як ми розібрали у `PatientRecord` вище, поле флюороскопії `ca` має тип **`Option[Double]`** (через пропуски `?` у CSV), а не `Double` — компілятор фізично не дозволить написати `p.ca > 0.0` напряму. Якщо розглядати `Option` як контейнер із максимум одним елементом, комбінація `.filter` + `.map` покриває всі три клінічні випадки без жодного `if`:
+  * `None` (дані відсутні, `?` у CSV) — `.filter` залишає `None`.
+  * `Some(0.0)` (судини чисті, умова `0.0 > 0.0` хибна) — `.filter` перетворює на `None`.
+  * `Some(2.0)` (виявлено кальциноз, умова `2.0 > 0.0` істинна) — `.filter` зберігає `Some(2.0)`, після чого `.map` формує `Some("Coronary fluoroscopy calcification (2 vessels)")`.
+* **`rules.flatten`** — згортає `List[Option[String]]` у незмінний `List[String]`, автоматично відсіюючи всі `None` без проміжного мутабельного буфера.
 
 ---
 
 ### Алгоритм 2: Шкала ризику Фрамінгема (Framingham Risk Score / ATP III)
-* 🔗 **Офіційне джерело:** [NIH / NHLBI: Third Report of the National Cholesterol Education Program (NCEP) Expert Panel (Adult Treatment Panel III — Full Report)](https://www.nhlbi.nih.gov/files/docs/resources/heart/atp-3-cholesterol-full-report.pdf).
+* **Офіційне джерело:** [NIH / NHLBI: Third Report of the National Cholesterol Education Program (NCEP) Expert Panel (Adult Treatment Panel III — Full Report)](https://www.nhlbi.nih.gov/files/docs/resources/heart/atp-3-cholesterol-full-report.pdf).
 * **Суть методу:** Бальна система оцінки 10-річного ризику ішемічної хвороби серця:
   $$\text{Score} = \text{Points}_{\text{Вік, Стать}} + \text{Points}_{\text{Холестерин, Вік}} + \text{Points}_{\text{Тиск}} + \text{Points}_{\text{Цукор}}$$
 * **Розподіл балів:**
@@ -144,7 +248,7 @@ val criticalFlags: Int          = activeReasons.size
   * $6 \le \text{Score} \le 10$ балів $\implies$ **Moderate Risk** (ризик $10-20\%$).
   * $\text{Score} < 6$ балів $\implies$ **Low Risk** (ризик $< 10\%$).
 
-> 💡 **Чому «10-річний» ризик оцінюється у невідкладній допомозі?**  
+> **Чому «10-річний» ризик оцінюється у невідкладній допомозі?**  
 > Пацієнта привезла швидка з болем *прямо зараз*, до чого тут горизонт у 10 років?  
 > У цьому сила MISD: алгоритми аналізують пацієнта у **трьох різних часових масштабах**:  
 > 1. **Duke Treadmill Score — «Тут і зараз» (хвилини):** як серце реагує на навантаження та чи є гостра гіпоксія міокарда.  
@@ -154,7 +258,7 @@ val criticalFlags: Int          = activeReasons.size
 ---
 
 ### Алгоритм 3: Індекс стрес-тесту Дюка (Duke Treadmill Score & Гемодинамічний резерв)
-* 🔗 **Офіційне джерело:** [Mark, D. B. et al. (PubMed / Duke University Medical Center): Prognostic value of a treadmill exercise score in outpatients with suspected coronary artery disease](https://pubmed.ncbi.nlm.nih.gov/1875969/).
+* **Офіційне джерело:** [Mark, D. B. et al. (PubMed / Duke University Medical Center): Prognostic value of a treadmill exercise score in outpatients with suspected coronary artery disease](https://pubmed.ncbi.nlm.nih.gov/1875969/).
 * **Суть методу:** Кардіореспіраторне навантаження виявляє приховану ішемію, яку не видно в стані спокою:
   1. **Коефіцієнт пульсового резерву:**
      $$\text{PulseReserve} = \frac{\text{thalach}}{220 - \text{age}}$$
@@ -171,7 +275,7 @@ val criticalFlags: Int          = activeReasons.size
 
 ---
 
-## 5. Мажоритарний консиліум (Consensus Arbiter)
+## 6. Мажоритарний консиліум (Consensus Arbiter)
 
 Кворум трьох незалежних фахівців приймає остаточне рішення. Щоб уникнути когнітивного дисонансу між «розбіжністю думок» та «узгодженим помірним ризиком», вердикти строго розділені на 4 прозорі стани:
 
@@ -199,12 +303,12 @@ val lowVotes      = diagnoses.count(_.risk == RiskLevel.Low)
     TriageVerdict.LowRiskDischarge(patient.id, l, diagnoses)
 ```
 
-* **🔴 CriticalHospitalize (Кворум High $\ge 2$):** Негайна реанімація (абсолютна більшість бачить загрозу інфаркту).
-* **🟡 SplitOpinionDisagreement (Розбіжність: 1 High):** Спірний випадок (потрібен терміновий арбітраж професора / ангіографія).
-* **🟠 ModerateRiskObservation (Кворум Moderate $\ge 2$):** Помірний ризик (узгоджене рішення про планове спостереження).
-* **🟢 LowRiskDischarge (Кворум Low $\ge 2$):** Низький ризик (амбулаторне лікування).
+* **CriticalHospitalize (Кворум High $\ge 2$):** Негайна реанімація (абсолютна більшість бачить загрозу інфаркту).
+* **SplitOpinionDisagreement (Розбіжність: 1 High):** Спірний випадок (потрібен терміновий арбітраж професора / ангіографія).
+* **ModerateRiskObservation (Кворум Moderate $\ge 2$):** Помірний ризик (узгоджене рішення про планове спостереження).
+* **LowRiskDischarge (Кворум Low $\ge 2$):** Низький ризик (амбулаторне лікування).
 
-#### ⚠️ Методичний акцент: «Сліпий catch-all» vs «Чесний Railway-Oriented парсинг»
+#### Інженерний акцент: «Сліпий catch-all» vs «Чесний Railway-Oriented парсинг»
 Конструкція `try ... catch case _: Exception => None` — небезпечний антипатерн. Вона тихо "ковтає" пошкоджені дані (наприклад, текстові символи у числовій колонці) і робить систему сліпою до помилок.
 
 У ФП ми робимо обробку помилок явною в сигнатурах:
@@ -228,7 +332,7 @@ Using.resource(Source.fromFile(path)) { source =>
 
 ---
 
-## 6. Запуск та результати виконання в консолі
+## 7. Запуск та результати виконання в консолі
 
 ### Команда для запуску
 Перейдіть у модуль `04_heart_triage` та запустіть `sbt`:
@@ -244,71 +348,71 @@ sbt run
 
 ```text
 ============================================================================
-  🏥 КАРДІОЛОГІЧНИЙ MISD КОНСИЛІУМ: EMERGENCY TRIAGE PIPELINE
+  КАРДІОЛОГІЧНИЙ MISD КОНСИЛІУМ: EMERGENCY TRIAGE PIPELINE
   Cleveland Heart Disease Dataset (303 пацієнти, UCI ML Repository)
 ============================================================================
-✅ Успішно завантажено пацієнтів: 303
-⚡ Виконується одночасна оцінка 3 незалежними медичними алгоритмами...
+Успішно завантажено валідних пацієнтів: 303
+Виконується паралельна оцінка 3 чистими функціональними алгоритмами...
 ----------------------------------------------------------------------------
 
-📊 РОЗПОДІЛ РІШЕНЬ КОНСИЛІУМУ (MISD QUORUM):
-  🔴 [CRITICAL_HOSPITALIZE]  : 114 пацієнтів (37.6%) — Негайна госпіталізація (Кворум High)
-  🟡 [SPLIT_DISAGREEMENT]    :  68 пацієнтів (22.4%) — Розбіжність думок (1 High — потрібен арбітр)
-  🟠 [MODERATE_OBSERVATION]  :  74 пацієнтів (24.4%) — Кворум помірного ризику (>=2 Moderate)
-  🟢 [LOW_RISK_DISCHARGE]    :  47 пацієнтів (15.5%) — Амбулаторний нагляд (Кворум Low)
+РОЗПОДІЛ РІШЕНЬ КОНСИЛІУМУ (MISD QUORUM):
+  [CRITICAL_HOSPITALIZE]  : 114 пацієнтів (37.6%) — Негайна госпіталізація (Кворум High)
+  [SPLIT_DISAGREEMENT]    :  68 пацієнтів (22.4%) — Розбіжність думок (1 High — потрібен арбітр)
+  [MODERATE_OBSERVATION]  :  74 пацієнтів (24.4%) — Кворум помірного ризику (>=2 Moderate)
+  [LOW_RISK_DISCHARGE]    :  47 пацієнтів (15.5%) — Амбулаторний нагляд (Кворум Low)
 
-🎯 КЛІНІЧНА ВАЛІДАЦІЯ ПРОТИ ВЕРИФІКОВАНОГО ДІАГНОЗУ (target > 0):
-  • Всього хворих у вибірці  : 139
-  • Всього здорових у вибірці: 164
-  • Чутливість (Sensitivity) : 99.28%  [Хворих виявлено вчасно: 138 / 139]
-  • Специфічність (Recall TN): 23.78%  [Здорових не госпіталізовано дарма: 39 / 164]
-  • Загальна точність        : 58.42%
-  • Критичні пропуски (FN)   : 1 (Пацієнти з ішемією, відправлені додому)
+КЛІНІЧНА ВАЛІДАЦІЯ ПРОТИ ВЕРИФІКОВАНОГО ДІАГНОЗУ (target > 0):
+  - Всього хворих у вибірці  : 139
+  - Всього здорових у вибірці: 164
+  - Чутливість (Sensitivity) : 99.28%  [Хворих виявлено вчасно: 138 / 139]
+  - Специфічність (Recall TN): 23.78%  [Здорових не госпіталізовано дарма: 39 / 164]
+  - Загальна точність        : 58.42%
+  - Критичні пропуски (FN)   : 1 (Пацієнти з ішемією, відправлені додому)
 
-⏱️ ПРОДУКТИВНІСТЬ MISD ПАЙПЛАЙНУ:
-  • Загальний час аналізу 303 пацієнтів: 219.95 мкс (0.220 мс)
-  • Середній час на 1 пацієнта (3 лікарі): 0.73 мкс (726 наносекунд!)
-  • Пропускна здатність                : 1,377,585 пацієнтів/сек
+ПРОДУКТИВНІСТЬ MISD ПАЙПЛАЙНУ:
+  - Загальний час аналізу 303 пацієнтів: 219.95 мкс (0.220 мс)
+  - Середній час на 1 пацієнта (3 лікарі): 0.73 мкс (726 наносекунд!)
+  - Пропускна здатність                : 1,377,585 пацієнтів/сек
 
-📋 ПРИКЛАДИ РОБОТИ КОНСИЛІУМУ ДЛЯ ОКРЕМИХ ПАЦІЄНТІВ:
+ПРИКЛАДИ РОБОТИ КОНСИЛІУМУ ДЛЯ ОКРЕМИХ ПАЦІЄНТІВ:
 ----------------------------------------------------------------------------
 Пацієнт #002 [Вік: 67, Тиск: 160, Холестерин: 286, Пульс: 108, Стенокардія: 1]
-  ➔ Рішення консиліуму: 🔴 КРИТИЧНИЙ (Кворум High: 3/3)
-  ➔ Фактичний діагноз : Хворий (target > 0)
-     • AHA/ACC Protocol      : High     | Hypertension Stage 2 (160 mmHg >= 140); Hypercholesterolemia (286 mg/dL >= 240); Asymptomatic ischemia (Type 4 Chest Pain); Coronary fluoroscopy calcification (3 vessels)
-     • Framingham Risk Score : High     | Framingham ATP III score: 19 pts (Age: 11, Chol: 6, BP: 2, Diab: 0)
-     • Duke Treadmill Score  : High     | Stress Index: -8.99 (Reserve: 71%, ST-dep: 1.5mm, Angina: 1, Slope: 2)
+  -> Рішення консиліуму: КРИТИЧНИЙ (Кворум High: 3/3)
+  -> Фактичний діагноз : Хворий (target > 0)
+     - AHA/ACC Protocol      : High     | Hypertension Stage 2 (160 mmHg >= 140); Hypercholesterolemia (286 mg/dL >= 240); Asymptomatic ischemia (Type 4 Chest Pain); Coronary fluoroscopy calcification (3 vessels)
+     - Framingham Risk Score : High     | Framingham ATP III score: 19 pts (Age: 11, Chol: 6, BP: 2, Diab: 0)
+     - Duke Treadmill Score  : High     | Stress Index: -8.99 (Reserve: 71%, ST-dep: 1.5mm, Angina: 1, Slope: 2)
 ----------------------------------------------------------------------------
 Пацієнт #005 [Вік: 41, Тиск: 130, Холестерин: 204, Пульс: 172, Стенокардія: 0]
-  ➔ Рішення консиліуму: 🟠 ПОМІРНИЙ РИЗИК (Кворум Moderate: 2/3 — плановий нагляд)
-  ➔ Фактичний діагноз : Здоровий (target = 0)
-     • AHA/ACC Protocol      : Low      | Vitals within normal limits
-     • Framingham Risk Score : Moderate | Framingham ATP III score: 9 pts (Age: 0, Chol: 8, BP: 1, Diab: 0)
-     • Duke Treadmill Score  : Moderate | Stress Index: 2.61 (Reserve: 96%, ST-dep: 1.4mm, Angina: 0, Slope: 1)
+  -> Рішення консиліуму: ПОМІРНИЙ РИЗИК (Кворум Moderate: 2/3 — плановий нагляд)
+  -> Фактичний діагноз : Здоровий (target = 0)
+     - AHA/ACC Protocol      : Low      | Vitals within normal limits
+     - Framingham Risk Score : Moderate | Framingham ATP III score: 9 pts (Age: 0, Chol: 8, BP: 1, Diab: 0)
+     - Duke Treadmill Score  : Moderate | Stress Index: 2.61 (Reserve: 96%, ST-dep: 1.4mm, Angina: 0, Slope: 1)
 ----------------------------------------------------------------------------
 Пацієнт #014 [Вік: 56, Тиск: 130, Холестерин: 256, Пульс: 142, Стенокардія: 1]
-  ➔ Рішення консиліуму: 🟡 РОЗБІЖНІСТЬ ДУМОК (1 High, 2 Moderate, 0 Low — потрібен арбітраж)
-  ➔ Фактичний діагноз : Хворий (target > 0)
-     • AHA/ACC Protocol      : High     | Hypercholesterolemia (256 mg/dL >= 240); Coronary fluoroscopy calcification (1 vessels)
-     • Framingham Risk Score : Moderate | Framingham ATP III score: 10 pts (Age: 8, Chol: 2, BP: 0, Diab: 0)
-     • Duke Treadmill Score  : Moderate | Stress Index: -0.34 (Reserve: 87%, ST-dep: 0.6mm, Angina: 1, Slope: 2)
+  -> Рішення консиліуму: РОЗБІЖНІСТЬ ДУМОК (1 High, 2 Moderate, 0 Low — потрібен арбітраж)
+  -> Фактичний діагноз : Хворий (target > 0)
+     - AHA/ACC Protocol      : High     | Hypercholesterolemia (256 mg/dL >= 240); Coronary fluoroscopy calcification (1 vessels)
+     - Framingham Risk Score : Moderate | Framingham ATP III score: 10 pts (Age: 8, Chol: 2, BP: 0, Diab: 0)
+     - Duke Treadmill Score  : Moderate | Stress Index: -0.34 (Reserve: 87%, ST-dep: 0.6mm, Angina: 1, Slope: 2)
 ----------------------------------------------------------------------------
 ============================================================================
-✅ MISD Тріаж завершено успішно.
+MISD Тріаж завершено успішно.
 ============================================================================
 ```
 
 ---
 
-## 7. Анатомія критичного пропуску (False Negative: чому 1 хворий пройшов фільтри?)
+## 8. Анатомія критичного пропуску (False Negative: чому 1 хворий пройшов фільтри?)
 
-У виводі консолі студенти бачать ключову метрику:  
-`• Критичні пропуски (FN): 1 (Пацієнти з ішемією, відправлені додому)`.
+У виводі консолі зверніть увагу на ключову метрику:  
+`- Критичні пропуски (FN)   : 1 (Пацієнти з ішемією, відправлені додому)`.
 
 ### Звідки взялася ця цифра?
 1. **Золотий стандарт (Ground Truth):** У вибірці з 303 пацієнтів рівно **139 людей мають підтверджену ішемічну хворобу серця** (`target > 0` за результатами інвазивної коронарографії).
 2. **Результат консиліуму:** Наш MISD-пайплайн затримав у клініці **138 із 139 хворих** (направивши їх у реанімацію, на арбітраж або в палату спостереження).
-3. **Пропуск (FN = 1):** Лише один хворий пацієнт отримав одностайний вердикт `🟢 LowRiskDischarge` і був "відправлений додому". Чутливість системи склала **99.28%** ($138 / 139$).
+3. **Пропуск (FN = 1):** Лише один хворий пацієнт отримав одностайний вердикт `LowRiskDischarge` і був "відправлений додому". Чутливість системи склала **99.28%** ($138 / 139$).
 
 ### Клінічний розбір: чому всі три алгоритми «проспали» патологію?
 Поглянемо на профіль цього пацієнта:
@@ -321,13 +425,13 @@ sbt run
 2. **Framingham Score:** Завдяки молодому віку та нормальному тиску сума балів $< 6$ $\implies$ `Low`.
 3. **Duke Treadmill Score:** Високий пульсовий розгін без гострого болю $\implies$ `Low`.
 
-> 💡 **Головний висновок для інженера:**  
+> **Головний висновок для інженера:**  
 > Цей пацієнт мав так звану **латентну мікроваскулярну ішемію**: базові неінвазивні датчики (тиск, вік, базове ЕКГ) не виявили відхилень. Патологію зафіксувала лише глибока сцинтиграфія міокарда (`thal = 7.0` — реверсивний дефект кровотоку).  
 > Саме тому в критичних розподілених системах архітектори впроваджують **захисні бар'єри (Guardrails)**: у разі найменшого сумніву або атипових скарг система не приймає рішення самостійно, а ескалює запит людині-експерту.
 
 ---
 
-## 8. Чому цей кейс принциповий для курсу?
+## 9. Чому цей кейс принциповий для курсу?
 
 1. **Медична чутливість (Sensitivity 99.28%):**  
    Консиліум налаштований так, що пропустити хворого (False Negative) практично неможливо — з 139 хворих лише 1 опинився в зоні низького ризику.

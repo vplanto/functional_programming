@@ -11,8 +11,8 @@ import triage.{Diagnosis, PatientRecord, RiskLevel}
  * https://www.ahajournals.org/doi/10.1161/circulationaha.117.032582
  *
  * Functional Architecture ("Rules as Data"):
- * Instead of imperative mutations (var, ListBuffer), rules are modeled
- * as an immutable List[Option[String]] using Option.when and flattened.
+ * Instead of imperative if-statements mutating an ArrayList,
+ * rules are modeled as an immutable List[Option[String]] using Option.when and flattened.
  */
 object AhaProtocol:
 
