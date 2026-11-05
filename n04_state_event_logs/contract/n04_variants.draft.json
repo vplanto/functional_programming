@@ -109,25 +109,29 @@
     "slug": "split_bill_trip",
     "title": "Сервіс спільних витрат (Split-bill)",
     "n03Invariant": "forbid_expense_exceeds_fund_balance",
+    "vocabularies": {
+      "member": { "size": 6 },
+      "expense_label": { "values": ["FUEL", "HOTEL", "DINNER", "TOLL_ROAD", "PARKING", "GROCERIES", "MUSEUM"] }
+    },
     "events": [
       {
         "code": "CONTRIBUTION",
         "fields": [
-          { "col": "p1", "name": "member", "type": "token" },
+          { "col": "p1", "name": "member", "type": "token", "vocab": "member" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "300.00", "max": "5000.00" } }
         ]
       },
       {
         "code": "SHARED_EXPENSE",
         "fields": [
-          { "col": "p1", "name": "label", "type": "short_label" },
+          { "col": "p1", "name": "label", "type": "short_label", "vocab": "expense_label" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "280.00", "max": "6500.00" } }
         ]
       },
       {
         "code": "PERSONAL_EXPENSE",
         "fields": [
-          { "col": "p1", "name": "member", "type": "token" },
+          { "col": "p1", "name": "member", "type": "token", "vocab": "member" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "45.00", "max": "950.00" } }
         ]
       },
@@ -146,11 +150,14 @@
     "slug": "bank_cashback_account",
     "title": "Кешбек-рахунок онлайн-банку",
     "n03Invariant": "forbid_withdraw_below_minimum_threshold",
+    "vocabularies": {
+      "category": { "values": ["CAFE", "GROCERIES", "PHARMACY", "FUEL", "TAXI", "ONLINE", "CINEMA"] }
+    },
     "events": [
       {
         "code": "ACCRUE",
         "fields": [
-          { "col": "p1", "name": "category", "type": "token" },
+          { "col": "p1", "name": "category", "type": "token", "vocab": "category" },
           { "col": "p2", "name": "purchase_uah", "type": "money_positive", "range": { "min": "75.00", "max": "12500.00" } },
           { "col": "p3", "name": "percent", "type": "percent_0_100", "range": { "min": "1.00", "max": "15.00" } }
         ]
@@ -183,6 +190,9 @@
     "slug": "gift_certificate",
     "title": "Подарунковий сертифікат маркетплейсу",
     "n03Invariant": "forbid_payment_exceeds_balance",
+    "entities": {
+      "order": { "key": ["order_id"] }
+    },
     "events": [
       {
         "code": "ACTIVATE",
@@ -192,6 +202,7 @@
       },
       {
         "code": "PAY_ORDER",
+        "entity": { "ref": "order", "op": "create" },
         "fields": [
           { "col": "p1", "name": "order_id", "type": "token" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "89.00", "max": "4500.00" } }
@@ -199,6 +210,7 @@
       },
       {
         "code": "ORDER_REFUND",
+        "entity": { "ref": "order", "op": "remove", "danglingRate": 0.05 },
         "fields": [
           { "col": "p1", "name": "order_id", "type": "token" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "50.00", "max": "3200.00" } }
@@ -254,9 +266,13 @@
     "slug": "parcel_locker",
     "title": "Розумний поштомат",
     "n03Invariant": "forbid_deposit_to_occupied_or_blocked_cell",
+    "entities": {
+      "parcel": { "key": ["cell"] }
+    },
     "events": [
       {
         "code": "DEPOSIT",
+        "entity": { "ref": "parcel", "op": "create", "duplicateRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } },
           { "col": "p2", "name": "parcel_id", "type": "token" },
@@ -265,6 +281,7 @@
       },
       {
         "code": "PICKUP",
+        "entity": { "ref": "parcel", "op": "remove", "danglingRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } },
           { "col": "p2", "name": "parcel_id", "type": "token" }
@@ -272,6 +289,7 @@
       },
       {
         "code": "EXPIRED_REMOVAL",
+        "entity": { "ref": "parcel", "op": "remove", "danglingRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "cell", "type": "positive_int", "range": { "min": 1, "max": 48 } },
           { "col": "p2", "name": "parcel_id", "type": "token" }
@@ -284,7 +302,7 @@
         ]
       }
     ],
-    "eventWeights": { "DEPOSIT": 0.4, "PICKUP": 0.35, "EXPIRED_REMOVAL": 0.15, "BLOCK_CELL": 0.1 },
+    "eventWeights": { "DEPOSIT": 0.45, "PICKUP": 0.35, "EXPIRED_REMOVAL": 0.1, "BLOCK_CELL": 0.1 },
     "constants": { "cellCount": 48 }
   },
   {
@@ -293,33 +311,36 @@
     "slug": "warehouse_pallets",
     "title": "Складський облік палет",
     "n03Invariant": "forbid_ship_more_than_stock",
+    "vocabularies": {
+      "sku": { "size": 25 }
+    },
     "events": [
       {
         "code": "RECEIVE",
         "fields": [
-          { "col": "p1", "name": "sku", "type": "token" },
+          { "col": "p1", "name": "sku", "type": "token", "vocab": "sku" },
           { "col": "p2", "name": "qty", "type": "positive_int", "range": { "min": 8, "max": 120 } }
         ]
       },
       {
         "code": "SHIP",
         "fields": [
-          { "col": "p1", "name": "sku", "type": "token" },
+          { "col": "p1", "name": "sku", "type": "token", "vocab": "sku" },
           { "col": "p2", "name": "qty", "type": "positive_int", "range": { "min": 4, "max": 85 } }
         ]
       },
       {
         "code": "WRITE_OFF",
         "fields": [
-          { "col": "p1", "name": "sku", "type": "token" },
+          { "col": "p1", "name": "sku", "type": "token", "vocab": "sku" },
           { "col": "p2", "name": "qty", "type": "positive_int", "range": { "min": 1, "max": 12 } }
         ]
       },
       {
         "code": "RELABEL",
         "fields": [
-          { "col": "p1", "name": "from_sku", "type": "token" },
-          { "col": "p2", "name": "to_sku", "type": "token" },
+          { "col": "p1", "name": "from_sku", "type": "token", "vocab": "sku" },
+          { "col": "p2", "name": "to_sku", "type": "token", "vocab": "sku" },
           { "col": "p3", "name": "qty", "type": "positive_int", "range": { "min": 2, "max": 45 } }
         ]
       }
@@ -333,6 +354,9 @@
     "slug": "fleet_fuel_card",
     "title": "Баланс паливної картки автопарку",
     "n03Invariant": "forbid_refuel_exceeds_limit",
+    "vocabularies": {
+      "vehicle": { "size": 12 }
+    },
     "events": [
       {
         "code": "LIMIT_TOPUP",
@@ -345,7 +369,7 @@
         "fields": [
           { "col": "p1", "name": "liters", "type": "liters_positive", "range": { "min": "28.00", "max": "145.00" } },
           { "col": "p2", "name": "fuel", "type": "enum_ref", "allowed": ["DIESEL", "PETROL", "LPG"] },
-          { "col": "p3", "name": "vehicle", "type": "token" }
+          { "col": "p3", "name": "vehicle", "type": "token", "vocab": "vehicle" }
         ]
       },
       {
@@ -364,9 +388,13 @@
     "slug": "cargo_elevator",
     "title": "Вантажний ліфт",
     "n03Invariant": "forbid_move_if_over_weight_limit",
+    "entities": {
+      "cargo": { "key": ["cargo_id"] }
+    },
     "events": [
       {
         "code": "LOAD",
+        "entity": { "ref": "cargo", "op": "create" },
         "fields": [
           { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "120.00", "max": "950.00" } },
           { "col": "p2", "name": "cargo_id", "type": "token" }
@@ -374,6 +402,7 @@
       },
       {
         "code": "UNLOAD",
+        "entity": { "ref": "cargo", "op": "remove", "danglingRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "120.00", "max": "950.00" } },
           { "col": "p2", "name": "cargo_id", "type": "token" }
@@ -392,7 +421,7 @@
         ]
       }
     ],
-    "eventWeights": { "LOAD": 0.4, "UNLOAD": 0.35, "ATTENDANT_TOGGLE": 0.15, "EMERGENCY_DUMP": 0.1 },
+    "eventWeights": { "LOAD": 0.33, "UNLOAD": 0.37, "ATTENDANT_TOGGLE": 0.2, "EMERGENCY_DUMP": 0.1 },
     "constants": { "weightLimitKg": 2000, "attendantKg": 80 }
   },
   {
@@ -401,9 +430,13 @@
     "slug": "parking_lot",
     "title": "Платна автостоянка",
     "n03Invariant": "forbid_entry_when_full",
+    "entities": {
+      "car": { "key": ["plate"] }
+    },
     "events": [
       {
         "code": "ENTRY",
+        "entity": { "ref": "car", "op": "create", "duplicateRate": 0.02 },
         "fields": [
           { "col": "p1", "name": "plate", "type": "token" },
           { "col": "p2", "name": "minute_of_day", "type": "non_negative_int", "range": { "min": 0, "max": 1439 } }
@@ -411,6 +444,7 @@
       },
       {
         "code": "EXIT_PAID",
+        "entity": { "ref": "car", "op": "remove", "danglingRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "plate", "type": "token" },
           { "col": "p2", "name": "duration_min", "type": "positive_int", "range": { "min": 12, "max": 600 } },
@@ -426,13 +460,14 @@
       },
       {
         "code": "LOST_TICKET_FINE",
+        "entity": { "ref": "car", "op": "touch", "danglingRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "plate", "type": "token" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "180.00", "max": "650.00" } }
         ]
       }
     ],
-    "eventWeights": { "ENTRY": 0.35, "EXIT_PAID": 0.35, "EMERGENCY_ENTRY": 0.05, "LOST_TICKET_FINE": 0.25 },
+    "eventWeights": { "ENTRY": 0.345, "EXIT_PAID": 0.355, "EMERGENCY_ENTRY": 0.05, "LOST_TICKET_FINE": 0.25 },
     "constants": { "capacity": 120 }
   },
   {
@@ -441,6 +476,12 @@
     "slug": "scooter_hub",
     "title": "Диспетчер прокату електросамокатів",
     "n03Invariant": "forbid_rent_if_charge_below_15",
+    "vocabularies": {
+      "scooter": { "size": 80 }
+    },
+    "entities": {
+      "rental": { "key": ["scooter_id"] }
+    },
     "events": [
       {
         "code": "RESTOCK",
@@ -448,15 +489,20 @@
           { "col": "p1", "name": "count", "type": "positive_int", "range": { "min": 3, "max": 22 } }
         ]
       },
-      { "code": "RENT_OUT", "fields": [{ "col": "p1", "name": "scooter_id", "type": "token" }] },
+      {
+        "code": "RENT_OUT",
+        "entity": { "ref": "rental", "op": "create", "duplicateRate": 0.02 },
+        "fields": [{ "col": "p1", "name": "scooter_id", "type": "token", "vocab": "scooter" }]
+      },
       {
         "code": "RETURN",
+        "entity": { "ref": "rental", "op": "remove", "danglingRate": 0.03 },
         "fields": [
-          { "col": "p1", "name": "scooter_id", "type": "token" },
+          { "col": "p1", "name": "scooter_id", "type": "token", "vocab": "scooter" },
           { "col": "p2", "name": "charge_percent", "type": "percent_0_100", "range": { "min": "8.00", "max": "98.00" } }
         ]
       },
-      { "code": "REMOVE_FOR_SERVICE", "fields": [{ "col": "p1", "name": "scooter_id", "type": "token" }] }
+      { "code": "REMOVE_FOR_SERVICE", "fields": [{ "col": "p1", "name": "scooter_id", "type": "token", "vocab": "scooter" }] }
     ],
     "eventWeights": { "RESTOCK": 0.2, "RENT_OUT": 0.35, "RETURN": 0.35, "REMOVE_FOR_SERVICE": 0.1 }
   },
@@ -466,16 +512,24 @@
     "slug": "aircraft_baggage",
     "title": "Багажний відсік літака",
     "n03Invariant": "forbid_load_if_exceeds_max_baggage_weight",
+    "entities": {
+      "bag": { "key": ["tag"] }
+    },
     "events": [
       {
         "code": "CHECK_IN_BAG",
+        "entity": { "ref": "bag", "op": "create" },
         "fields": [
           { "col": "p1", "name": "kg", "type": "kg_positive", "range": { "min": "8.00", "max": "32.00" } },
           { "col": "p2", "name": "section", "type": "enum_ref", "allowed": ["NOSE", "TAIL"] },
           { "col": "p3", "name": "tag", "type": "token" }
         ]
       },
-      { "code": "REMOVE_BAG", "fields": [{ "col": "p1", "name": "tag", "type": "token" }] },
+      {
+        "code": "REMOVE_BAG",
+        "entity": { "ref": "bag", "op": "remove", "danglingRate": 0.03 },
+        "fields": [{ "col": "p1", "name": "tag", "type": "token" }]
+      },
       {
         "code": "CARGO_LOAD",
         "fields": [
@@ -603,6 +657,9 @@
     "slug": "auction_house",
     "title": "Аукціон ігрових предметів",
     "n03Invariant": "forbid_bid_below_min_increment",
+    "vocabularies": {
+      "player": { "size": 20 }
+    },
     "events": [
       {
         "code": "LIST",
@@ -613,21 +670,21 @@
       {
         "code": "BID",
         "fields": [
-          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p1", "name": "player", "type": "token", "vocab": "player" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "250.00", "max": "25000.00" } }
         ]
       },
       {
         "code": "OUTBID_REFUND",
         "fields": [
-          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p1", "name": "player", "type": "token", "vocab": "player" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "200.00", "max": "24000.00" } }
         ]
       },
       {
         "code": "BUYOUT",
         "fields": [
-          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p1", "name": "player", "type": "token", "vocab": "player" },
           { "col": "p2", "name": "price", "type": "money_positive", "range": { "min": "2000.00", "max": "50000.00" } }
         ]
       }
@@ -676,11 +733,14 @@
     "slug": "guild_treasury",
     "title": "Клан-банк",
     "n03Invariant": "forbid_allocation_exceeds_treasury",
+    "vocabularies": {
+      "player": { "size": 25 }
+    },
     "events": [
       {
         "code": "DONATE",
         "fields": [
-          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p1", "name": "player", "type": "token", "vocab": "player" },
           { "col": "p2", "name": "gold", "type": "money_positive", "range": { "min": "500.00", "max": "25000.00" } }
         ]
       },
@@ -700,7 +760,7 @@
       {
         "code": "DONATION_REFUND",
         "fields": [
-          { "col": "p1", "name": "player", "type": "token" },
+          { "col": "p1", "name": "player", "type": "token", "vocab": "player" },
           { "col": "p2", "name": "gold", "type": "money_positive", "range": { "min": "100.00", "max": "8000.00" } }
         ]
       }
@@ -924,11 +984,14 @@
     "slug": "coffee_vending",
     "title": "Вендинговий автомат кави",
     "n03Invariant": "forbid_drink_if_insufficient_ingredients",
+    "vocabularies": {
+      "drink": { "values": ["ESPRESSO", "AMERICANO", "CAPPUCCINO", "LATTE", "FLAT_WHITE", "MOCHA"] }
+    },
     "events": [
       {
         "code": "BREW",
         "fields": [
-          { "col": "p1", "name": "drink", "type": "short_label" },
+          { "col": "p1", "name": "drink", "type": "short_label", "vocab": "drink" },
           { "col": "p2", "name": "beans_g", "type": "positive_int", "range": { "min": 7, "max": 18 } },
           { "col": "p3", "name": "milk_g", "type": "non_negative_int", "range": { "min": 0, "max": 25 } },
           { "col": "p4", "name": "price", "type": "money_positive", "range": { "min": "25.00", "max": "65.00" } }
@@ -962,12 +1025,17 @@
     "slug": "ev_charging",
     "title": "Зарядна станція EV",
     "n03Invariant": "stop_charge_when_budget_exhausted",
+    "entities": {
+      "session": { "key": ["session_id"] }
+    },
     "events": [
       {
         "code": "SESSION_START",
+        "entity": { "ref": "session", "op": "create" },
         "fields": [
           { "col": "p1", "name": "port_kw", "type": "positive_int", "range": { "min": 22, "max": 350 } },
-          { "col": "p2", "name": "client_balance", "type": "money_positive", "range": { "min": "150.00", "max": "3000.00" } }
+          { "col": "p2", "name": "client_balance", "type": "money_positive", "range": { "min": "150.00", "max": "3000.00" } },
+          { "col": "p3", "name": "session_id", "type": "token" }
         ]
       },
       {
@@ -977,7 +1045,11 @@
           { "col": "p2", "name": "charge_uah", "type": "money_positive", "range": { "min": "12.00", "max": "380.00" } }
         ]
       },
-      { "code": "SESSION_END", "fields": [{ "col": "p1", "name": "session_id", "type": "token" }] },
+      {
+        "code": "SESSION_END",
+        "entity": { "ref": "session", "op": "remove", "danglingRate": 0.03 },
+        "fields": [{ "col": "p1", "name": "session_id", "type": "token" }]
+      },
       {
         "code": "IDLE_PENALTY",
         "fields": [
@@ -985,7 +1057,7 @@
         ]
       }
     ],
-    "eventWeights": { "SESSION_START": 0.1, "ENERGY_TICK": 0.65, "SESSION_END": 0.15, "IDLE_PENALTY": 0.1 }
+    "eventWeights": { "SESSION_START": 0.12, "ENERGY_TICK": 0.655, "SESSION_END": 0.125, "IDLE_PENALTY": 0.1 }
   },
   {
     "id": 29,
@@ -1028,9 +1100,13 @@
     "slug": "cloud_drive",
     "title": "Хмарне сховище",
     "n03Invariant": "forbid_upload_if_exceeds_free_space",
+    "entities": {
+      "file": { "key": ["file", "kind"] }
+    },
     "events": [
       {
         "code": "UPLOAD",
+        "entity": { "ref": "file", "op": "create" },
         "fields": [
           { "col": "p1", "name": "file", "type": "token" },
           { "col": "p2", "name": "size_mb", "type": "positive_int", "range": { "min": 1, "max": 1200 } },
@@ -1039,9 +1115,11 @@
       },
       {
         "code": "TRASH",
+        "entity": { "ref": "file", "op": "remove", "danglingRate": 0.05 },
         "fields": [
           { "col": "p1", "name": "file", "type": "token" },
-          { "col": "p2", "name": "size_mb", "type": "positive_int", "range": { "min": 1, "max": 1200 } }
+          { "col": "p2", "name": "size_mb", "type": "positive_int", "range": { "min": 1, "max": 1200 } },
+          { "col": "p3", "name": "kind", "type": "enum_ref", "allowed": ["DOC", "IMG", "VID", "OTHER"] }
         ]
       },
       { "code": "EMPTY_TRASH", "fields": [] },
@@ -1061,6 +1139,9 @@
     "slug": "audiobook_credits",
     "title": "Абонемент аудіокниг",
     "n03Invariant": "forbid_checkout_with_zero_credits",
+    "entities": {
+      "owned_book": { "key": ["book_id"] }
+    },
     "events": [
       {
         "code": "MONTHLY_GRANT",
@@ -1068,8 +1149,16 @@
           { "col": "p1", "name": "credits", "type": "positive_int", "range": { "min": 1, "max": 3 } }
         ]
       },
-      { "code": "BUY_BOOK", "fields": [{ "col": "p1", "name": "book_id", "type": "token" }] },
-      { "code": "RETURN_BOOK", "fields": [{ "col": "p1", "name": "book_id", "type": "token" }] },
+      {
+        "code": "BUY_BOOK",
+        "entity": { "ref": "owned_book", "op": "create" },
+        "fields": [{ "col": "p1", "name": "book_id", "type": "token" }]
+      },
+      {
+        "code": "RETURN_BOOK",
+        "entity": { "ref": "owned_book", "op": "remove", "danglingRate": 0.03 },
+        "fields": [{ "col": "p1", "name": "book_id", "type": "token" }]
+      },
       {
         "code": "BUY_CREDIT_PACK",
         "fields": [
@@ -1148,6 +1237,9 @@
     "slug": "ects_tracker",
     "title": "Трекер ECTS студента",
     "n03Invariant": "check_progress_toward_60_credits",
+    "entities": {
+      "debt": { "key": ["course"] }
+    },
     "events": [
       {
         "code": "PASS",
@@ -1165,16 +1257,21 @@
           { "col": "p3", "name": "grade", "type": "positive_int", "range": { "min": 60, "max": 100 } }
         ]
       },
-      { "code": "FAIL_DEBT", "fields": [{ "col": "p1", "name": "course", "type": "token" }] },
+      {
+        "code": "FAIL_DEBT",
+        "entity": { "ref": "debt", "op": "create" },
+        "fields": [{ "col": "p1", "name": "course", "type": "token" }]
+      },
       {
         "code": "CLEAR_DEBT",
+        "entity": { "ref": "debt", "op": "remove", "danglingRate": 0.03 },
         "fields": [
           { "col": "p1", "name": "course", "type": "token" },
           { "col": "p2", "name": "grade", "type": "positive_int", "range": { "min": 60, "max": 90 } }
         ]
       }
     ],
-    "eventWeights": { "PASS": 0.45, "TRANSFER": 0.15, "FAIL_DEBT": 0.15, "CLEAR_DEBT": 0.25 },
+    "eventWeights": { "PASS": 0.45, "TRANSFER": 0.15, "FAIL_DEBT": 0.2, "CLEAR_DEBT": 0.2 },
     "constants": { "promotionThresholdEcts": 60 }
   },
   {
@@ -1183,32 +1280,270 @@
     "slug": "freelance_time",
     "title": "Тайм-трекер фрілансера",
     "n03Invariant": "forbid_time_entry_outside_1min_24h",
+    "vocabularies": {
+      "project": { "size": 8 }
+    },
     "events": [
       {
         "code": "LOG_TIME",
         "fields": [
-          { "col": "p1", "name": "project", "type": "token" },
+          { "col": "p1", "name": "project", "type": "token", "vocab": "project" },
           { "col": "p2", "name": "task", "type": "token" },
           { "col": "p3", "name": "hours", "type": "money_positive", "range": { "min": "0.25", "max": "8.00" } }
         ]
       },
-      { "code": "INVOICE", "fields": [{ "col": "p1", "name": "project", "type": "token" }] },
+      { "code": "INVOICE", "fields": [{ "col": "p1", "name": "project", "type": "token", "vocab": "project" }] },
       {
         "code": "PAYMENT",
         "fields": [
-          { "col": "p1", "name": "project", "type": "token" },
+          { "col": "p1", "name": "project", "type": "token", "vocab": "project" },
           { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "1200.00", "max": "45000.00" } }
         ]
       },
       {
         "code": "UNPAID_FIX",
         "fields": [
-          { "col": "p1", "name": "project", "type": "token" },
+          { "col": "p1", "name": "project", "type": "token", "vocab": "project" },
           { "col": "p2", "name": "hours", "type": "money_positive", "range": { "min": "0.25", "max": "2.50" } }
         ]
       }
     ],
     "eventWeights": { "LOG_TIME": 0.55, "INVOICE": 0.15, "PAYMENT": 0.2, "UNPAID_FIX": 0.1 },
     "constants": { "minHours": "0.0167", "maxHours": "24.0" }
+  },
+  {
+    "id": 36,
+    "block": 6,
+    "slug": "llm_token_billing",
+    "title": "Білінг токенів API мовної моделі (LLM)",
+    "n03Invariant": "forbid_request_if_cost_exceeds_balance",
+    "entities": {
+      "request": { "key": ["request_id"] }
+    },
+    "events": [
+      {
+        "code": "TOKEN_TOPUP",
+        "fields": [
+          { "col": "p1", "name": "tokens", "type": "positive_int", "range": { "min": 50000, "max": 400000 } }
+        ]
+      },
+      {
+        "code": "MODEL_REQUEST",
+        "entity": { "ref": "request", "op": "create" },
+        "fields": [
+          { "col": "p1", "name": "model", "type": "enum_ref", "allowed": ["LLM_LARGE", "LLM_MEDIUM", "LLM_SMALL", "CODE_ASSIST"] },
+          { "col": "p2", "name": "prompt_tokens", "type": "positive_int", "range": { "min": 100, "max": 64000 } },
+          { "col": "p3", "name": "completion_tokens", "type": "positive_int", "range": { "min": 10, "max": 8000 } },
+          { "col": "p4", "name": "request_id", "type": "token" }
+        ]
+      },
+      {
+        "code": "RESEARCH_GRANT",
+        "fields": [
+          { "col": "p1", "name": "tokens", "type": "positive_int", "range": { "min": 20000, "max": 150000 } }
+        ]
+      },
+      {
+        "code": "OUTAGE_REFUND",
+        "entity": { "ref": "request", "op": "remove", "danglingRate": 0.05 },
+        "fields": [
+          { "col": "p1", "name": "request_id", "type": "token" }
+        ]
+      }
+    ],
+    "eventWeights": { "TOKEN_TOPUP": 0.12, "MODEL_REQUEST": 0.7, "RESEARCH_GRANT": 0.05, "OUTAGE_REFUND": 0.13 },
+    "constants": { "completionMultiplier": 2 }
+  },
+  {
+    "id": 37,
+    "block": 6,
+    "slug": "concert_box_office",
+    "title": "Каса продажу квитків концертної зали",
+    "n03Invariant": "forbid_sale_or_invite_to_taken_or_blocked_seat",
+    "entities": {
+      "seat": { "key": ["sector", "seat"] }
+    },
+    "events": [
+      {
+        "code": "TICKET_SALE",
+        "entity": { "ref": "seat", "op": "create", "duplicateRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "sector", "type": "enum_ref", "allowed": ["FAN_ZONE", "PARTER", "BALCONY"] },
+          { "col": "p2", "name": "seat", "type": "positive_int", "range": { "min": 1, "max": 5000 } },
+          { "col": "p3", "name": "price", "type": "money_positive", "range": { "min": "450.00", "max": "4800.00" } }
+        ]
+      },
+      {
+        "code": "TICKET_REFUND",
+        "entity": { "ref": "seat", "op": "remove", "fromEvents": ["TICKET_SALE"], "danglingRate": 0.05 },
+        "fields": [
+          { "col": "p1", "name": "sector", "type": "enum_ref", "allowed": ["FAN_ZONE", "PARTER", "BALCONY"] },
+          { "col": "p2", "name": "seat", "type": "positive_int", "range": { "min": 1, "max": 5000 } },
+          { "col": "p3", "name": "price", "type": "money_positive", "range": { "min": "450.00", "max": "4800.00" } }
+        ]
+      },
+      {
+        "code": "INVITATION",
+        "entity": { "ref": "seat", "op": "create", "duplicateRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "sector", "type": "enum_ref", "allowed": ["FAN_ZONE", "PARTER", "BALCONY"] },
+          { "col": "p2", "name": "seat", "type": "positive_int", "range": { "min": 1, "max": 5000 } }
+        ]
+      },
+      {
+        "code": "TECH_BLOCK",
+        "entity": { "ref": "seat", "op": "create", "duplicateRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "sector", "type": "enum_ref", "allowed": ["FAN_ZONE", "PARTER", "BALCONY"] },
+          { "col": "p2", "name": "seat", "type": "positive_int", "range": { "min": 1, "max": 5000 } }
+        ]
+      }
+    ],
+    "eventWeights": { "TICKET_SALE": 0.48, "TICKET_REFUND": 0.46, "INVITATION": 0.04, "TECH_BLOCK": 0.02 },
+    "constants": { "seatsPerSector": 5000, "refundPercent": 80, "serviceFeePercent": 20 }
+  },
+  {
+    "id": 38,
+    "block": 6,
+    "slug": "blood_bank",
+    "title": "Банк донорської крові медичного центру",
+    "n03Invariant": "forbid_issue_if_stock_below_critical_reserve",
+    "entities": {
+      "batch": { "key": ["batch"] }
+    },
+    "events": [
+      {
+        "code": "DONATION",
+        "entity": { "ref": "batch", "op": "create" },
+        "fields": [
+          { "col": "p1", "name": "blood_group", "type": "enum_ref", "allowed": ["O_POS", "O_NEG", "A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG"] },
+          { "col": "p2", "name": "ml", "type": "positive_int", "range": { "min": 200, "max": 500 } },
+          { "col": "p3", "name": "batch", "type": "token" }
+        ]
+      },
+      {
+        "code": "ISSUE",
+        "fields": [
+          { "col": "p1", "name": "blood_group", "type": "enum_ref", "allowed": ["O_POS", "O_NEG", "A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG"] },
+          { "col": "p2", "name": "ml", "type": "positive_int", "range": { "min": 200, "max": 1200 } },
+          { "col": "p3", "name": "department", "type": "enum_ref", "allowed": ["SURGERY", "TRAUMA", "ICU", "OBSTETRICS", "ONCOLOGY", "CARDIOLOGY"] }
+        ]
+      },
+      {
+        "code": "EMERGENCY_SUPPLY",
+        "fields": [
+          { "col": "p1", "name": "blood_group", "type": "enum_ref", "allowed": ["O_POS", "O_NEG", "A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG"] },
+          { "col": "p2", "name": "ml", "type": "positive_int", "range": { "min": 1000, "max": 4000 } }
+        ]
+      },
+      {
+        "code": "DISPOSE_EXPIRED",
+        "entity": { "ref": "batch", "op": "remove", "danglingRate": 0.05 },
+        "fields": [
+          { "col": "p1", "name": "batch", "type": "token" },
+          { "col": "p2", "name": "blood_group", "type": "enum_ref", "allowed": ["O_POS", "O_NEG", "A_POS", "A_NEG", "B_POS", "B_NEG", "AB_POS", "AB_NEG"] },
+          { "col": "p3", "name": "ml", "type": "positive_int", "range": { "min": 200, "max": 500 } }
+        ]
+      }
+    ],
+    "eventWeights": { "DONATION": 0.45, "ISSUE": 0.35, "EMERGENCY_SUPPLY": 0.05, "DISPOSE_EXPIRED": 0.15 },
+    "constants": { "criticalReserveMl": 1000 }
+  },
+  {
+    "id": 39,
+    "block": 6,
+    "slug": "floating_licenses",
+    "title": "Пул корпоративних ліцензій ПЗ (Floating Licenses)",
+    "n03Invariant": "forbid_checkout_when_pool_full_or_user_holds_license",
+    "vocabularies": {
+      "user": { "size": 60 }
+    },
+    "entities": {
+      "session": { "key": ["user"] }
+    },
+    "events": [
+      {
+        "code": "LICENSE_CHECKOUT",
+        "entity": { "ref": "session", "op": "create", "duplicateRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "user", "type": "token", "vocab": "user" }
+        ]
+      },
+      {
+        "code": "LICENSE_RETURN",
+        "entity": { "ref": "session", "op": "remove", "danglingRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "user", "type": "token", "vocab": "user" },
+          { "col": "p2", "name": "minutes", "type": "positive_int", "range": { "min": 5, "max": 480 } }
+        ]
+      },
+      {
+        "code": "IDLE_TIMEOUT",
+        "entity": { "ref": "session", "op": "remove", "danglingRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "user", "type": "token", "vocab": "user" }
+        ]
+      },
+      {
+        "code": "POOL_EXPAND",
+        "fields": [
+          { "col": "p1", "name": "seats", "type": "positive_int", "range": { "min": 1, "max": 2 } }
+        ]
+      }
+    ],
+    "eventWeights": { "LICENSE_CHECKOUT": 0.48, "LICENSE_RETURN": 0.4, "IDLE_TIMEOUT": 0.1195, "POOL_EXPAND": 0.0005 },
+    "constants": { "initialLicenses": 25 }
+  },
+  {
+    "id": 40,
+    "block": 6,
+    "slug": "university_library",
+    "title": "Абонемент університетської бібліотеки",
+    "n03Invariant": "forbid_checkout_with_unpaid_fine_or_max_books",
+    "vocabularies": {
+      "reader": { "size": 80 },
+      "book": { "size": 60 }
+    },
+    "entities": {
+      "loan": { "key": ["reader", "book"] }
+    },
+    "events": [
+      {
+        "code": "BOOK_CHECKOUT",
+        "entity": { "ref": "loan", "op": "create", "duplicateRate": 0.02 },
+        "fields": [
+          { "col": "p1", "name": "reader", "type": "token", "vocab": "reader" },
+          { "col": "p2", "name": "book", "type": "token", "vocab": "book" },
+          { "col": "p3", "name": "allowed_days", "type": "positive_int", "range": { "min": 14, "max": 30 } }
+        ]
+      },
+      {
+        "code": "BOOK_RETURN",
+        "entity": { "ref": "loan", "op": "remove", "danglingRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "reader", "type": "token", "vocab": "reader" },
+          { "col": "p2", "name": "book", "type": "token", "vocab": "book" },
+          { "col": "p3", "name": "days_used", "type": "positive_int", "range": { "min": 1, "max": 30 } }
+        ]
+      },
+      {
+        "code": "FINE_PAYMENT",
+        "fields": [
+          { "col": "p1", "name": "reader", "type": "token", "vocab": "reader" },
+          { "col": "p2", "name": "amount", "type": "money_positive", "range": { "min": "10.00", "max": "300.00" } }
+        ]
+      },
+      {
+        "code": "COPY_LOST",
+        "entity": { "ref": "loan", "op": "remove", "danglingRate": 0.03 },
+        "fields": [
+          { "col": "p1", "name": "reader", "type": "token", "vocab": "reader" },
+          { "col": "p2", "name": "book", "type": "token", "vocab": "book" },
+          { "col": "p3", "name": "compensation", "type": "money_positive", "range": { "min": "150.00", "max": "1800.00" } }
+        ]
+      }
+    ],
+    "eventWeights": { "BOOK_CHECKOUT": 0.36, "BOOK_RETURN": 0.34, "FINE_PAYMENT": 0.27, "COPY_LOST": 0.03 },
+    "constants": { "copiesPerBook": 5, "maxBooksPerReader": 5, "finePerDayUah": "5.00" }
   }
 ]

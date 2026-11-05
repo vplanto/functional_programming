@@ -1,7 +1,7 @@
 {
   "$schema": "./n04_contract.schema.json",
   "meta": {
-    "version": "1.1.0",
+    "version": "1.2.0",
     "alignedWith": "docs/n03_state_modeling_tasks.md",
     "studentGuide": "docs/n04_state_event_logs.md",
     "rangeSemantics": "min/max у primitiveTypes — межі валідації (smart constructor). Генератор CSV використовує ті самі межі; у полі варіанта можна додати range { min, max } для звуження."
@@ -191,7 +191,7 @@
       "layer": "parse",
       "appliesToTypes": ["token", "short_label"],
       "suggestedDomainError": "InvalidToken",
-      "mutations": ["", "bad_token", "invalid,comma"]
+      "mutations": ["", "bad token", "invalid,comma"]
     },
     "type_enum_invalid": {
       "layer": "parse",
@@ -204,6 +204,18 @@
       "appliesToTypes": ["kwh_positive"],
       "suggestedDomainError": "InvalidEnergy",
       "mutations": ["0", "-1.0"]
+    },
+    "type_measure_non_positive": {
+      "layer": "parse",
+      "appliesToTypes": ["liters_positive", "kg_positive"],
+      "suggestedDomainError": "InvalidQuantity",
+      "mutations": ["0", "-0.01", "-15.00"]
+    },
+    "type_measure_malformed": {
+      "layer": "parse",
+      "appliesToTypes": ["liters_positive", "kg_positive", "kwh_non_negative"],
+      "suggestedDomainError": "InvalidQuantity",
+      "mutations": ["", "1,5", "abc", "-1.000"]
     }
   },
   "defaultInjectionProfile": {
