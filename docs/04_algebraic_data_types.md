@@ -572,7 +572,7 @@ def handleCommand(order: Order, cmd: OrderCommand): Either[String, Order] =
 
 ---
 
-## Резюме: Правило трьох секунд
+## Важливі підсумки
 
 * **Моделюйте бізнес-домен через ADT:** Комбінуйте `case class` (AND) та `enum` (OR).
 * **Make Illegal States Unrepresentable:** Не зберігайте невалідні комбінації даних, які потім доведеться ловити валідаторами.
