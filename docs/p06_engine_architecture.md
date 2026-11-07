@@ -286,39 +286,7 @@ val (nextLane, nextStance) = appliedAction match
 
 ---
 
-## 6. Напрямки інженерного вдосконалення коду
-
-Два напрямки поглибленої реалізації архітектури:
-
-### 1. Pure State-Passing Random
-Зараз генерація чисел використовує мутабельний `scala.util.Random`. Чистий підхід у стилі книги *Functional Programming in Scala (Red Book)*:
-```scala
-case class SimpleRNG(seed: Long):
-  def nextInt: (Int, SimpleRNG) =
-    val newSeed = (seed * 0x5DEECE66DL + 0xBL) & 0xFFFFFFFFFFFFL
-    val nextRNG = SimpleRNG(newSeed)
-    val n = (newSeed >>> 16).toInt
-    (n, nextRNG)
-```
-
-> 💡 **Як прокинути нове зерно `SimpleRNG` між тіками без `var`?**  
-> Питання архітектури: *«Як зберегти нове зерно `SimpleRNG` між тіками без мутабельних змінних?»*  
-> У чистому функціональному програмуванні такий стан передається як **наскрізний рекурсивний акумулятор**:
-> ```scala
-> def gameLoop(tick: Long, hero: HeroState, rng: SimpleRNG): RunSummary =
->   val (action, nextRNG) = bot.decidePure(observation, rng)
->   val nextHero = applyPhysics(hero, action, currentSlice)
->   gameLoop(tick + 1, nextHero, nextRNG)
-> ```
-> Кожна ітерація викликає наступну, передаючи свіже `nextRNG`. У функціональних бібліотеках цей патерн узагальнюється у **монаду `State[SimpleRNG, Action]`**, яка приховує передачу стану всередині `for`-comprehension.
-
-### 2. Покомпонентна телеметрія ансамблю
-Розширення `TickRecord` фіксацією часу кожного з трьох ботів окремо:
-`subBotTimings: Map[String, Long]`. Це дозволяє у [index.html](https://github.com/vplanto/functional_programming/blob/main/docs/viewer/index.html) бачити графік тривалості виконання кожного алгоритму ансамблю.
-
----
-
-## 7. Контрольні питання для самоперевірки
+## 6. Контрольні питання для самоперевірки
 
 <details markdown="1">
 <summary>1. Чому функція decide(observation: Observation) повинна повертати дію для НАСТУПНОГО тіка (t+1), а не для поточного (t)?</summary>
