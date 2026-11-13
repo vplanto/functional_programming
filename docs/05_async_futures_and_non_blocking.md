@@ -306,7 +306,7 @@ fetchUser(10).onComplete {
 Оскільки `Future` має методи `map` та `flatMap`, ми композиціонуємо асинхронні ланцюжки через знайомий нам із [Лекції 03](03_railway_oriented_programming.md) **`for-comprehension`**:
 
 ```scala
-// ЧИСТО, ДЕКЛАРАТИВНО, ПЛОСКО:
+// ЧИСТО, ДЕКЛАРАТИВНО, ПЛОСКО, ПОСЛІДОВНО:
 val resultPipeline: Future[Unit] = 
   for
     user     <- fetchUser(10)
@@ -316,6 +316,8 @@ val resultPipeline: Future[Unit] =
   yield ()
 ```
 Якщо на будь-якому етапі станеться помилка, ланцюжок негайно перерветься і поверне `Future.failed(e)`. Ніяких вкладених сходів!
+
+> **Чому тут послідовне виконання є коректним:** кожен крок у цьому `for-comprehension` залежить за даними від попереднього (`orders` потребує `user.id`, `discount` потребує `user` та `orders`, а `sendEmail` потребує `user.email` та `discount`). Оскільки `for` розгортається у вкладені виклики `.flatMap`, кроки запускаються суворо по черзі - і тут інакше неможливо. Проблема виникає лише тоді, коли так само записують **незалежні** запити (див. наступний розділ).
 
 ---
 
@@ -437,7 +439,7 @@ futureOfList.map { users =>
 
 #### Як зробити пакетну обробку відмовостійкою (Resilient Pipeline)
 Тут нам на допомогу приходить союз **Railway-Oriented Programming (Either з Лекції 03)** та асинхронності!  
-Ми перетворюємо кожен `Future[T]` на безпечний `Future[Either[Throwable, T]]` перед викликом `sequence`:
+Ми перетворюємо кожен `Future[T]` на безпечний `Future[Either[Throwable, T]]` перед викликом `sequence` за допомогою методу **`recover`** (він перехоплює `Failure` усередині `Future` і перетворює виняток на валідне значення, детальніше - у Розділі 9):
 
 ```scala
 val futures: List[Future[User]] = ids.map(fetchUser)
@@ -467,19 +469,37 @@ resilientResult.map { results =>
 
 ## 9. Обробка помилок у Future: `recover` проти `recoverWith`
 
-Під час роботи з `Future` часто виникає помилка компіляції `Type mismatch: expected Future[T], found T`.  
-Вона спричинена плутаниною між синхронним та асинхронним відновленням.
+`recover` і `recoverWith` перехоплюють помилку (`Failure`) усередині `Future` (аналог `try/catch` для асинхронного контейнера), але очікують різний тип повернення:
+* **`recover`** приймає часткову функцію `Throwable => T` (синхронне значення з пам'яті).
+* **`recoverWith`** приймає часткову функцію `Throwable => Future[T]` (новий асинхронний виклик).
+
+Коли їх плутають, компілятор зупиняє збірку помилкою `Type mismatch`:
+
+```scala
+// ПОМИЛКА 1: у recover повертаємо Future[BigDecimal] замість BigDecimal
+val broken1: Future[BigDecimal] = fetchBalance(userId).recover {
+  case _: TimeoutException => fetchBalanceFromBackup(userId)
+  // Type mismatch: Found: Future[BigDecimal], Required: BigDecimal
+}
+
+// ПОМИЛКА 2: у recoverWith повертаємо звичайне значення BigDecimal замість Future[BigDecimal]
+val broken2: Future[BigDecimal] = fetchBalance(userId).recoverWith {
+  case _: TimeoutException => BigDecimal(0)
+  // Type mismatch: Found: BigDecimal, Required: Future[BigDecimal]
+}
+```
 
 ### 1. `recover`: Швидка синхронна підстановка з пам'яті (Pure fallback)
 Використовується, коли для відновлення **не потрібно робити нових мережевих чи дискових запитів**. Метод очікує повернення чистого значення типу `T`:
 
 ```scala
-// recover повертає чисте значення String (з кешу або дефолт):
-val weather: Future[String] = fetchWeatherFromSensor()
-  .recover {
-    case _: TimeoutException => "Хмарно (дані з локального кешу в RAM)"
-    case _                   => "Дані тимчасово недоступні"
-  }
+val cachedBalances: Map[Int, BigDecimal] = Map(42 -> BigDecimal(1500))
+
+// recover повертає чисте значення BigDecimal (з кешу в RAM або дефолт):
+val balance: Future[BigDecimal] = fetchBalance(userId).recover {
+  case _: TimeoutException => cachedBalances.getOrElse(userId, BigDecimal(0))
+  case _                   => BigDecimal(0)
+}
 ```
 
 ### 2. `recoverWith`: Асинхронний запит до резервної системи (Async fallback)
@@ -487,13 +507,11 @@ val weather: Future[String] = fetchWeatherFromSensor()
 
 ```scala
 // recoverWith повертає нову Future[BigDecimal] (новий мережевий виклик):
-val price: Future[BigDecimal] = fetchPriceFromMainProvider()
-  .recoverWith {
-    case ex: Exception =>
-      logWarning(s"Основний провайдер впав ($ex), звертаємось до резервного...")
-      // recover тут НЕ скомпілюється, бо нам треба знову лізти по мережі!
-      fetchPriceFromBackupDatabase() // Повертає Future[BigDecimal]
-  }
+val balanceWithRetry: Future[BigDecimal] = fetchBalance(userId).recoverWith {
+  case ex: Exception =>
+    logWarning(s"Основний сервіс балансу впав ($ex), звертаємось до резервного...")
+    fetchBalanceFromBackup(userId) // Повертає Future[BigDecimal]
+}
 ```
 
 ---
