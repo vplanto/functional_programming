@@ -562,6 +562,31 @@ yield x + y
 * Якщо джерело надсилає 1 000 000 подій на секунду, `Future.sequence` або цикл `map(processAsync)` одразу поставить у чергу пулу потоків мільйон незалежних завдань.
 * Черга завдань і об'єкти `Future` у heap неконтрольовано ростуть, доки сервіс не впаде з `OutOfMemoryError` або не захлинеться від затримок.
 
+### 4. Втрата стек-трейсу (Async Stack Trace Loss)
+У синхронному коді стек-трейс показує весь шлях викликів від `main` до місця аварії, бо весь ланцюжок виконується на одному стеку потоку ОС. У `Future` завдання ставиться в чергу `ExecutionContext` і запускається вже на **іншому** потоці, коли початковий метод давно завершився.
+
+```scala
+def processOrder(orderId: Int): Future[BigDecimal] =
+  fetchBalance(orderId).map { balance =>
+    if balance < 0 then throw new IllegalStateException("Від'ємний баланс")
+    balance
+  }
+
+def checkout(): Future[BigDecimal] = processOrder(42)
+```
+
+Якщо всередині `.map` виникне виняток (наприклад, `NullPointerException` або `IllegalStateException`), у логах буде приблизно такий стек-трейс:
+
+```text
+java.lang.IllegalStateException: Від'ємний баланс
+    at OrderService$.processOrder$$anonfun$1(OrderService.scala:3)
+    at scala.concurrent.impl.Promise$Transformation.run(Promise.scala:470)
+    at java.base/java.util.concurrent.ForkJoinTask$RunnableExecuteAction.exec(ForkJoinTask.java:1423)
+    at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187)
+```
+
+У цьому стек-трейсі **немає** виклику `checkout()` і всього попереднього бізнес-контексту, який створив задачу. Замість них ви бачите лише внутрішні класи планувальника `Promise$Transformation` та `ForkJoinPool`. У реактивних потоках (`Flux` / `Source`), де таких асинхронних переходів десятки, ця проблема стає ще гострішою.
+
 > **Місток до наступної лекції:**  
 > Для обробки нескінченних потоків подій із контролем тиску індустрія створила **Reactive Streams (Project Reactor / Akka Streams)**. Саме їх ми підкоримо в [Лекції 06](06_reactive_streams_and_troubleshooting.md)!
 
